@@ -35,6 +35,13 @@ interface SectionDance {
   id: string
   dances: Dance | null
   order_index: number
+  music_id?: string | null
+  music?: {
+    id: string
+    title: string
+    artist: string | null
+    audio_url: string | null
+  } | null
 }
 
 interface Section {
@@ -217,28 +224,47 @@ export function BallDetailContent({
                         return (
                           <div
                             key={sd.id}
-                            className="flex items-start gap-4 pb-3 border-b last:border-0"
+                            className="pb-3 border-b last:border-0"
                           >
-                            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-sm font-semibold text-primary">
-                                {sdIndex + 1}
-                              </span>
-                            </div>
-                            <Link
-                              href={`/dance/${sd.dances.id}`}
-                              className="flex-1 transition-colors hover:text-primary"
-                            >
-                              <div>
-                                <h4 className="font-semibold text-foreground">
-                                  {getDisplayDanceName(sd.dances)}
-                                </h4>
-                                {sd.dances.difficulty && (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {getDifficultyLabel(sd.dances.difficulty)}
-                                  </p>
-                                )}
+                            <div className="flex items-start gap-4 mb-3">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-sm font-semibold text-primary">
+                                  {sdIndex + 1}
+                                </span>
                               </div>
-                            </Link>
+                              <Link
+                                href={`/dance/${sd.dances.id}?ballId=${ball.id}`}
+                                className="flex-1 transition-colors hover:text-primary"
+                              >
+                                <div>
+                                  <h4 className="font-semibold text-foreground">
+                                    {getDisplayDanceName(sd.dances)}
+                                  </h4>
+                                  {sd.dances.difficulty && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {getDifficultyLabel(sd.dances.difficulty)}
+                                    </p>
+                                  )}
+                                </div>
+                              </Link>
+                            </div>
+                            {sd.music?.audio_url && (
+                              <div className="ml-10 mt-2">
+                                <audio
+                                  controls
+                                  className="w-full"
+                                  controlsList="nodownload"
+                                  crossOrigin="anonymous"
+                                  src={sd.music.audio_url}
+                                  style={{ minHeight: '32px' }}
+                                >
+                                  Your browser does not support the audio element.
+                                </audio>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {sd.music.title}{sd.music.artist ? ` - ${sd.music.artist}` : ''}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )
                       })}

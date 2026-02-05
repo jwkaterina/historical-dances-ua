@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -47,10 +47,12 @@ interface DanceDetailContentProps {
   dance: Dance
   musicTracks: MusicTrack[]
   musicForEdit: MusicEntry[]
+  ballId?: string
 }
 
-export function DanceDetailContent({ dance, musicTracks, musicForEdit }: DanceDetailContentProps) {
+export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }: DanceDetailContentProps) {
   const { t, language } = useLanguage()
+  const router = useRouter()
 
   // Get localized content
   const displayName = language === "ru" 
@@ -77,27 +79,37 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit }: DanceDe
     return difficultyMap[difficulty] || difficulty
   }
 
+  const handleBackClick = () => {
+    if (ballId) {
+      router.push(`/balls/${ballId}`)
+    } else {
+      router.back()
+    }
+  }
+
   return (
     <>
-      <Link
-        href="/"
-        className="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <svg
-          className="mr-2 h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+      <div className="mb-6 inline-flex items-center">
+        <button
+          onClick={handleBackClick}
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 19l-7-7 7-7"
-          />
-        </svg>
-        {t("backToDances")}
-      </Link>
+          <svg
+            className="mr-2 h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          {ballId ? t("backToBall") : t("backToDances")}
+        </button>
+      </div>
 
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">

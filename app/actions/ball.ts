@@ -40,19 +40,8 @@ export async function getBalls() {
         created_at,
         ball_sections (
           id,
-          name,
-          name_de,
-          name_ru,
-          order_index,
           section_dances (
-            id,
-            dances (
-              id,
-              name,
-              name_de,
-              name_ru
-            ),
-            order_index
+            id
           )
         )
       `
@@ -63,7 +52,14 @@ export async function getBalls() {
       console.log("[v0] Ball fetch error:", error)
       return []
     }
-    return data || []
+    
+    // Calculate dance count from ball_sections and section_dances
+    const ballsWithCounts = (data || []).map(ball => ({
+      ...ball,
+      ball_dances: ball.ball_sections?.flatMap((section: any) => section.section_dances || []) || []
+    }))
+    
+    return ballsWithCounts
   } catch (error) {
     console.log("[v0] Ball fetch exception:", error)
     return []
