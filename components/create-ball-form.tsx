@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,12 +19,25 @@ import { useToast } from "@/hooks/use-toast"
 import { createBall, updateBall } from "@/app/actions/ball"
 import { useLanguage } from "@/hooks/use-language" // Declare the useLanguage variable
 
+interface MusicTrack {
+  id: string
+  title: string
+  artist: string | null
+  audio_url: string | null
+}
+
 interface Dance {
   id: string
   name: string
   name_de: string | null
   name_ru: string | null
   difficulty: string | null
+  musicTracks?: MusicTrack[]
+}
+
+interface SectionDanceEntry {
+  danceId: string
+  musicId?: string | null
 }
 
 interface Section {
@@ -32,7 +45,7 @@ interface Section {
   name: string
   name_de: string
   name_ru: string
-  dances: string[]
+  dances: SectionDanceEntry[]
 }
 
 interface CreateBallFormProps {
@@ -47,14 +60,33 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
 
+  // Transform ballToEdit.ball_sections to the format expected by the form
+  const initialSections = useMemo(() => {
+    if (ballToEdit?.ball_sections && ballToEdit.ball_sections.length > 0) {
+      return ballToEdit.ball_sections
+        .sort((a: any, b: any) => a.order_index - b.order_index)
+        .map((section: any) => ({
+          id: section.id,
+          name: section.name || "",
+          name_de: section.name_de || "",
+          name_ru: section.name_ru || "",
+          dances: (section.section_dances || [])
+            .sort((a: any, b: any) => a.order_index - b.order_index)
+            .map((sd: any) => ({
+              danceId: sd.dances?.id || sd.dance_id,
+              musicId: sd.music_id || null
+            }))
+        }))
+    }
+    return [{ id: undefined, name: "", name_de: "", name_ru: "", dances: [] }]
+  }, [ballToEdit])
+
   const [nameDE, setNameDE] = useState(ballToEdit?.name_de || "")
   const [nameRU, setNameRU] = useState(ballToEdit?.name_ru || "")
   const [date, setDate] = useState(ballToEdit?.date || "")
   const [selectedCityDE, setSelectedCityDE] = useState(ballToEdit?.place_de || "")
   const [selectedCityRU, setSelectedCityRU] = useState(ballToEdit?.place_ru || "")
-  const [sections, setSections] = useState<Section[]>(
-    ballToEdit?.sections || [{ id: undefined, name: "", name_de: "", name_ru: "", dances: [] }]
-  )
+  const [sections, setSections] = useState<Section[]>(initialSections)
   const [danceSearch, setDanceSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [activeSection, setActiveSection] = useState(0)
@@ -91,19 +123,34 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
     setSections(newSections)
   }
 
-  const toggleDanceInSection = (danceId: string) => {
-    const currentDances = sections[activeSection].dances
-    if (currentDances.includes(danceId)) {
-      updateSection(activeSection, "dances", currentDances.filter(id => id !== danceId))
-    } else {
-      // Add dance in order
-      updateSection(activeSection, "dances", [...currentDances, danceId])
+  const addDanceToSection = (sectionIndex: number, danceId: string) => {
+    const dance = dances.find(d => d.id === danceId)
+    const currentDances = sections[sectionIndex].dances
+    
+    // Check if dance is already in section
+    if (currentDances.some(d => d.danceId === danceId)) {
+      return
     }
+    
+    // If dance has exactly one music track, auto-assign it
+    // Otherwise, leave music_id as null for user selection
+    const musicId = dance?.musicTracks?.length === 1 ? dance.musicTracks[0].id : null
+    
+    updateSection(sectionIndex, "dances", [
+      ...currentDances,
+      { danceId, musicId }
+    ])
   }
 
-  const removeDanceFromSection = (index: number) => {
-    const currentDances = sections[activeSection].dances
-    updateSection(activeSection, "dances", currentDances.filter((_, i) => i !== index))
+  const updateDanceMusicInSection = (sectionIndex: number, danceIndex: number, musicId: string | null) => {
+    const currentDances = [...sections[sectionIndex].dances]
+    currentDances[danceIndex] = { ...currentDances[danceIndex], musicId }
+    updateSection(sectionIndex, "dances", currentDances)
+  }
+
+  const removeDanceFromSection = (sectionIndex: number, danceIndex: number) => {
+    const currentDances = sections[sectionIndex].dances
+    updateSection(sectionIndex, "dances", currentDances.filter((_, i) => i !== danceIndex))
   }
 
   const handleSubmit = async () => {
@@ -253,24 +300,65 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
               </div>
 
               <div className="space-y-3">
-                {section.dances.map((danceId, danceIndex) => {
-                  const dance = dances.find(d => d.id === danceId)
+                {section.dances.map((entry, danceIndex) => {
+                  const dance = dances.find(d => d.id === entry.danceId)
+                  const hasMusicTracks = dance?.musicTracks && dance.musicTracks.length > 0
+                  const hasMultipleTracks = dance?.musicTracks && dance.musicTracks.length > 1
+                  
                   return (
-                    <div key={danceIndex} className="flex items-center gap-2">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                        {danceIndex + 1}
+                    <div key={danceIndex} className="border rounded-md p-3 bg-muted/30">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
+                          {danceIndex + 1}
+                        </div>
+                        <div className="flex-1 text-sm font-medium">
+                          {language === "ru"
+                            ? (dance?.name_ru || dance?.name)
+                            : (dance?.name_de || dance?.name)}
+                        </div>
+                        <button
+                          onClick={() => removeDanceFromSection(index, danceIndex)}
+                          className="text-destructive hover:text-destructive/80"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
-                      <div className="flex-1 text-sm">
-                        {language === "ru"
-                          ? (dance?.name_ru || dance?.name)
-                          : (dance?.name_de || dance?.name)}
-                      </div>
-                      <button
-                        onClick={() => removeDanceFromSection(danceIndex)}
-                        className="text-destructive hover:text-destructive/80"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      
+                      {/* Music track selection */}
+                      {hasMusicTracks && hasMultipleTracks && (
+                        <div className="mt-2 ml-10">
+                          <Label className="text-xs text-muted-foreground mb-1 block">
+                            {t("selectTrack")}
+                          </Label>
+                          <select
+                            value={entry.musicId || ""}
+                            onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
+                            className="w-full text-sm border rounded px-2 py-1 bg-background"
+                          >
+                            <option value="">-- {t("selectTrack")} --</option>
+                            {dance?.musicTracks?.map((track) => (
+                              <option key={track.id} value={track.id}>
+                                {track.title}{track.artist ? ` - ${track.artist}` : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                      
+                      {/* Show selected track for single-track dances */}
+                      {hasMusicTracks && !hasMultipleTracks && (
+                        <div className="mt-1 ml-10 text-xs text-muted-foreground">
+                          {dance?.musicTracks?.[0]?.title}
+                          {dance?.musicTracks?.[0]?.artist ? ` - ${dance.musicTracks[0].artist}` : ''}
+                        </div>
+                      )}
+                      
+                      {/* No tracks available */}
+                      {!hasMusicTracks && (
+                        <div className="mt-1 ml-10 text-xs text-muted-foreground italic">
+                          {t("noTracksAvailable")}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -290,25 +378,30 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                   </div>
                   <div className="border rounded max-h-60 overflow-auto">
                     <div className="space-y-1">
-                      {filteredDances.map((dance) => (
-                        <div
-                          key={dance.id}
-                          onClick={() => {
-                            toggleDanceInSection(dance.id)
-                            setDanceSearch("")
-                          }}
-                          className="px-3 py-2 cursor-pointer hover:bg-accent flex items-center justify-between"
-                        >
-                          <span className="text-sm">
-                            {language === "ru"
-                              ? (dance.name_ru || dance.name)
-                              : (dance.name_de || dance.name)}
-                          </span>
-                          {section.dances.includes(dance.id) && (
-                            <span className="text-primary text-sm font-medium">✓</span>
-                          )}
-                        </div>
-                      ))}
+                      {filteredDances.map((dance) => {
+                        const isSelected = section.dances.some(d => d.danceId === dance.id)
+                        return (
+                          <div
+                            key={dance.id}
+                            onClick={() => {
+                              if (!isSelected) {
+                                addDanceToSection(index, dance.id)
+                                setDanceSearch("")
+                              }
+                            }}
+                            className={`px-3 py-2 cursor-pointer hover:bg-accent flex items-center justify-between ${isSelected ? 'opacity-50' : ''}`}
+                          >
+                            <span className="text-sm">
+                              {language === "ru"
+                                ? (dance.name_ru || dance.name)
+                                : (dance.name_de || dance.name)}
+                            </span>
+                            {isSelected && (
+                              <span className="text-primary text-sm font-medium">✓</span>
+                            )}
+                          </div>
+                        )
+                      })}
                       {filteredDances.length === 0 && (
                         <div className="px-3 py-2 text-sm text-muted-foreground">
                           {t("noDancesFound")}

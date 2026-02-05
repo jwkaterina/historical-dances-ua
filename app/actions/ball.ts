@@ -3,12 +3,17 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
+interface SectionDanceEntry {
+  danceId: string
+  musicId?: string | null
+}
+
 interface Section {
   id?: string
   name: string
   name_de: string
   name_ru: string
-  dances: string[]
+  dances: SectionDanceEntry[]
 }
 
 interface BallData {
@@ -99,7 +104,14 @@ export async function getBallById(id: string) {
               name_ru,
               difficulty
             ),
-            order_index
+            order_index,
+            music_id,
+            music:music_id (
+              id,
+              title,
+              artist,
+              audio_url
+            )
           )
         )
       `
@@ -168,10 +180,11 @@ export async function createBall(ballData: BallData) {
 
           // Add dances to section
           if (section.dances.length > 0) {
-            const dancesToInsert = section.dances.map((danceId, index) => ({
+            const dancesToInsert = section.dances.map((entry, index) => ({
               section_id: sectionData.id,
-              dance_id: danceId,
+              dance_id: entry.danceId,
               order_index: index,
+              music_id: entry.musicId || null,
             }))
 
             const { error: dancesError } = await supabase
@@ -248,10 +261,11 @@ export async function updateBall(id: string, ballData: BallData) {
 
       // Add dances to section
       if (section.dances.length > 0) {
-        const dancesToInsert = section.dances.map((danceId, index) => ({
+        const dancesToInsert = section.dances.map((entry, index) => ({
           section_id: sectionData.id,
-          dance_id: danceId,
+          dance_id: entry.danceId,
           order_index: index,
+          music_id: entry.musicId || null,
         }))
 
         const { error: dancesError } = await supabase
@@ -297,14 +311,37 @@ export async function getDancesForBall() {
 
     const { data, error } = await supabase
       .from("dances")
-      .select("id, name, name_de, name_ru, difficulty")
+      .select(`
+        id, 
+        name, 
+        name_de, 
+        name_ru, 
+        difficulty,
+        dance_music (
+          music:music_id (
+            id,
+            title,
+            artist,
+            audio_url
+          )
+        )
+      `)
       .order("name", { ascending: true })
 
     if (error) {
       console.log("[v0] Dances fetch error:", error)
       return []
     }
-    return data || []
+    
+    // Transform data to include music tracks array
+    const dancesWithMusic = (data || []).map(dance => ({
+      ...dance,
+      musicTracks: dance.dance_music
+        ?.map((dm: any) => dm.music)
+        .filter((m: any) => m && m.audio_url) || []
+    }))
+    
+    return dancesWithMusic
   } catch (error) {
     console.log("[v0] Dances fetch exception:", error)
     return []
