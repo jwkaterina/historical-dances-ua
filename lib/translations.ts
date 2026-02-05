@@ -185,6 +185,7 @@ export const translations = {
     
     // Dance detail
     backToDances: "Zurück zu Tänzen",
+    backToBall: "Zurück zum Ball",
     origin: "Herkunft",
     description: "Beschreibung",
     scheme: "Schema",
@@ -248,6 +249,9 @@ export const translations = {
     deleteConfirmMessageBall: "Sind Sie sicher, dass Sie diesen Ball löschen möchten?",
     dances: "Tänze",
     selectDancesForBall: "Tänze für diesen Ball auswählen",
+    addAnotherDance: "Weiteren Tanz hinzufügen",
+    selectTrack: "Musikstück auswählen",
+    noTracksAvailable: "Keine Musik verfügbar",
     noDancesSelected: "Keine Tänze ausgewählt",
     selected: "ausgewählt",
     ballUpdated: "Ball erfolgreich aktualisiert",
@@ -381,6 +385,7 @@ export const translations = {
     
     // Dance detail
     backToDances: "Назад к танцам",
+    backToBall: "Назад к балу",
     origin: "Происхождение",
     description: "Описание",
     scheme: "Схема",
@@ -424,7 +429,7 @@ export const translations = {
     deleteDance: "Удалить танец",
     deleting: "Удаление...",
     confirmDelete: "Удалить танец",
-    deleteConfirmMessage: "Вы уверены, что хотите удалить этот танец? Это действие невозможно отменить.",
+    deleteConfirmMessage: "Вы уверены, что хотите удалить этот танец? Это действие невозможно о��менить.",
     youtubeUrl: "YouTube URL",
     selectDances: "Выберите танцы",
     addBall: "Добавить бал",
@@ -444,6 +449,9 @@ export const translations = {
     deleteConfirmMessageBall: "Вы уверены, что хотите удалить этот бал?",
     dances: "Танцы",
     selectDancesForBall: "Выберите танцы для этого бала",
+    addAnotherDance: "Добавить еще танец",
+    selectTrack: "Выбрать музыку",
+    noTracksAvailable: "Музыка недоступна",
     noDancesSelected: "Танцы не выбраны",
     selected: "выбрано",
     ballUpdated: "Бал успешно обновлен",

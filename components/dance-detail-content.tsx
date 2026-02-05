@@ -47,9 +47,10 @@ interface DanceDetailContentProps {
   dance: Dance
   musicTracks: MusicTrack[]
   musicForEdit: MusicEntry[]
+  ballId?: string
 }
 
-export function DanceDetailContent({ dance, musicTracks, musicForEdit }: DanceDetailContentProps) {
+export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }: DanceDetailContentProps) {
   const { t, language } = useLanguage()
 
   // Get localized content
@@ -80,7 +81,7 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit }: DanceDe
   return (
     <>
       <Link
-        href="/"
+        href={ballId ? `/balls/${ballId}` : "/"}
         className="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <svg
@@ -96,7 +97,7 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit }: DanceDe
             d="M15 19l-7-7 7-7"
           />
         </svg>
-        {t("backToDances")}
+        {ballId ? t("backToBall") : t("backToDances")}
       </Link>
 
       <div className="mb-8">

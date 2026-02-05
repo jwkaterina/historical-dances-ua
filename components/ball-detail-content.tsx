@@ -20,8 +20,14 @@ import { deleteBall } from "@/app/actions/ball"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { formatDate } from "@/lib/date-utils"
-import { cities, type CityKey } from "@/lib/translations"
 import { Trash2, ArrowLeft, Edit } from "lucide-react"
+
+interface MusicTrack {
+  id: string
+  title: string
+  artist: string | null
+  audio_url: string | null
+}
 
 interface Dance {
   id: string
@@ -29,12 +35,20 @@ interface Dance {
   name_de: string | null
   name_ru: string | null
   difficulty: string | null
+  musicTracks?: MusicTrack[]
 }
 
 interface SectionDance {
   id: string
   dances: Dance | null
   order_index: number
+  music_id?: string | null
+  music?: {
+    id: string
+    title: string
+    artist: string | null
+    audio_url: string | null
+  } | null
 }
 
 interface Section {
@@ -74,14 +88,9 @@ export function BallDetailContent({
     ? (ball.name_ru || ball.name)
     : (ball.name_de || ball.name)
 
-  const getCityDisplay = (cityKey: string | null) => {
-    if (!cityKey) return ""
-    return language === "ru"
-      ? cities.ru[cityKey as CityKey] || cityKey
-      : cities.de[cityKey as CityKey] || cityKey
-  }
-
-  const displayPlace = getCityDisplay(ball.place)
+  const displayPlace = language === "ru"
+    ? (ball.place_ru || ball.place || "")
+    : (ball.place_de || ball.place || "")
   const formattedDate = formatDate(ball.date, language)
 
   const getDifficultyLabel = (difficulty: string | null) => {
@@ -217,28 +226,52 @@ export function BallDetailContent({
                         return (
                           <div
                             key={sd.id}
-                            className="flex items-start gap-4 pb-3 border-b last:border-0"
+                            className="pb-3 border-b last:border-0"
                           >
-                            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-sm font-semibold text-primary">
-                                {sdIndex + 1}
-                              </span>
-                            </div>
-                            <Link
-                              href={`/dance/${sd.dances.id}`}
-                              className="flex-1 transition-colors hover:text-primary"
-                            >
-                              <div>
-                                <h4 className="font-semibold text-foreground">
-                                  {getDisplayDanceName(sd.dances)}
-                                </h4>
-                                {sd.dances.difficulty && (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {getDifficultyLabel(sd.dances.difficulty)}
-                                  </p>
-                                )}
+                            <div className="flex items-start gap-4">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-sm font-semibold text-primary">
+                                  {sdIndex + 1}
+                                </span>
                               </div>
-                            </Link>
+                              <Link
+                                href={`/dance/${sd.dances.id}?ballId=${ball.id}`}
+                                className="flex-1 transition-colors hover:text-primary"
+                              >
+                                <div>
+                                  <h4 className="font-semibold text-foreground">
+                                    {getDisplayDanceName(sd.dances)}
+                                  </h4>
+                                  {sd.dances.difficulty && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {getDifficultyLabel(sd.dances.difficulty)}
+                                    </p>
+                                  )}
+                                </div>
+                              </Link>
+                            </div>
+                            {sd.music?.audio_url && (() => {
+                              const danceData = allDances.find(d => d.id === sd.dances?.id)
+                              const hasMultipleTracks = danceData?.musicTracks && danceData.musicTracks.length > 1
+                              return (
+                                <div className="ml-10 mt-2">
+                                  <audio
+                                    controls
+                                    className="w-full h-10"
+                                    controlsList="nodownload"
+                                    crossOrigin="anonymous"
+                                    src={sd.music.audio_url}
+                                  >
+                                    Your browser does not support the audio element.
+                                  </audio>
+                                  {hasMultipleTracks && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {sd.music.title}{sd.music.artist ? ` - ${sd.music.artist}` : ''}
+                                    </p>
+                                  )}
+                                </div>
+                              )
+                            })()}
                           </div>
                         )
                       })}

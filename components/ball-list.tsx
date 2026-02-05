@@ -66,7 +66,6 @@ export function BallList({ balls, query }: BallListProps) {
           : (ball.name_de || ball.name)
         
         const displayPlace = getCityDisplay(ball)
-        const danceCount = ball.ball_dances?.length || 0
         const formattedDate = formatDate(ball.date, language)
 
         return (
@@ -82,9 +81,6 @@ export function BallList({ balls, query }: BallListProps) {
                   </p>
                   <p className="text-muted-foreground">
                     {t("ballPlace")}: {displayPlace}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {danceCount} {danceCount === 1 ? t("dance") : t("dances")}
                   </p>
                 </div>
               </CardContent>

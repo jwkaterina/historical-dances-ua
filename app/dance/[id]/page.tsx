@@ -5,13 +5,15 @@ import { DanceDetailContent } from "@/components/dance-detail-content"
 
 interface PageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ ballId?: string }>
 }
 
 // Disable caching for this page so updates are always fresh
 export const revalidate = 0
 
-export default async function DanceDetailPage({ params }: PageProps) {
+export default async function DanceDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params
+  const { ballId } = await searchParams
   const supabase = await createClient()
 
   // Fetch dance details
@@ -61,7 +63,8 @@ export default async function DanceDetailPage({ params }: PageProps) {
         <DanceDetailContent 
           dance={dance} 
           musicTracks={musicTracks} 
-          musicForEdit={musicForEdit} 
+          musicForEdit={musicForEdit}
+          ballId={ballId}
         />
       </main>
     </div>
