@@ -153,6 +153,17 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
     updateSection(sectionIndex, "dances", currentDances.filter((_, i) => i !== danceIndex))
   }
 
+  const resetForm = () => {
+    setNameDE(ballToEdit?.name_de || "")
+    setNameRU(ballToEdit?.name_ru || "")
+    setDate(ballToEdit?.date || "")
+    setSelectedCityDE(ballToEdit?.place_de || "")
+    setSelectedCityRU(ballToEdit?.place_ru || "")
+    setSections(initialSections)
+    setDanceSearch("")
+    setActiveSection(0)
+  }
+
   const handleSubmit = async () => {
     // Only require basic ball info: name in both languages, date, and cities
     if (!nameDE || !nameRU || !date || !selectedCityDE || !selectedCityRU) {
@@ -213,7 +224,15 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (newOpen) {
+          resetForm()
+        }
+        setOpen(newOpen)
+      }}
+    >
       <DialogTrigger asChild>
         <Button>
           <Edit className="mr-2 h-4 w-4" /> {/* Declare the Edit component */}
@@ -225,7 +244,8 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-auto max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl pb-20 sm:pb-6">
+
         <DialogHeader>
           <DialogTitle>{ballToEdit ? t("editBall") : t("createBall")}</DialogTitle>
         </DialogHeader>
