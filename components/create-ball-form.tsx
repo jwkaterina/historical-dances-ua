@@ -90,6 +90,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   const [danceSearch, setDanceSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [activeSection, setActiveSection] = useState(0)
+  const [dragOverTarget, setDragOverTarget] = useState<{ sectionIndex: number; danceIndex: number } | null>(null)
 
   if (!isAdmin) {
     return null
@@ -152,6 +153,52 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
     const currentDances = sections[sectionIndex].dances
     updateSection(sectionIndex, "dances", currentDances.filter((_, i) => i !== danceIndex))
   }
+
+  const handleDragStart = (sectionIndex: number, danceIndex: number) => (e: React.DragEvent) => {
+    e.dataTransfer.setData("application/json", JSON.stringify({ fromSection: sectionIndex, fromIndex: danceIndex }))
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleDragOver = (sectionIndex: number, danceIndex: number) => (e: React.DragEvent) => {
+    e.preventDefault() // allow drop
+    e.dataTransfer.dropEffect = "move"
+    setDragOverTarget({ sectionIndex, danceIndex })
+  }
+
+  const handleDropOnDance = (sectionIndex: number, danceIndex: number) => (e: React.DragEvent) => {
+    e.preventDefault()
+    const payload = e.dataTransfer.getData("application/json")
+    if (!payload) return
+    const { fromSection, fromIndex } = JSON.parse(payload) as { fromSection: number; fromIndex: number }
+
+    setSections(prev => {
+      const next = prev.map(s => ({ ...s, dances: [...s.dances] }))
+      const [moved] = next[fromSection].dances.splice(fromIndex, 1)
+
+      // insert before the target danceIndex in destination section
+      const insertIndex = danceIndex + (fromSection === sectionIndex && fromIndex < danceIndex ? 0 : 0)
+      next[sectionIndex].dances.splice(insertIndex, 0, moved)
+      return next
+    })
+    setDragOverTarget(null)
+  }
+
+  const handleDropOnSectionEnd = (sectionIndex: number) => (e: React.DragEvent) => {
+    e.preventDefault()
+    const payload = e.dataTransfer.getData("application/json")
+    if (!payload) return
+    const { fromSection, fromIndex } = JSON.parse(payload) as { fromSection: number; fromIndex: number }
+
+    setSections(prev => {
+      const next = prev.map(s => ({ ...s, dances: [...s.dances] }))
+      const [moved] = next[fromSection].dances.splice(fromIndex, 1)
+      next[sectionIndex].dances.push(moved)
+      return next
+    })
+    setDragOverTarget(null)
+  }
+
+  const handleDragLeave = () => setDragOverTarget(null)
 
   const resetForm = () => {
     setNameDE(ballToEdit?.name_de || "")
@@ -324,86 +371,106 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                   const dance = dances.find(d => d.id === entry.danceId)
                   const hasMusicTracks = dance?.musicTracks && dance.musicTracks.length > 0
                   const hasMultipleTracks = dance?.musicTracks && dance.musicTracks.length > 1
-                  
+
                   return (
-                    <div key={danceIndex} className="border rounded-md p-3 bg-muted/30">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                          {danceIndex + 1}
-                        </div>
-                        <div className="flex-1 text-sm font-medium">
-                          {language === "ru"
-                            ? (dance?.name_ru || dance?.name)
-                            : (dance?.name_de || dance?.name)}
-                        </div>
-                        <button
-                          onClick={() => removeDanceFromSection(index, danceIndex)}
-                          className="text-destructive hover:text-destructive/80"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                      
-                      {/* Music track selection */}
-                      {hasMusicTracks && hasMultipleTracks && (
-                        <div className="mt-2 ml-10">
-                          <Label className="text-xs text-muted-foreground mb-1 block">
-                            {t("selectTrack")}
-                          </Label>
-                          <select
-                            value={entry.musicId || ""}
-                            onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
-                            className="w-full text-sm border rounded px-2 py-1 bg-background"
+                      <div
+                          key={danceIndex}
+                          className={`border rounded-md p-3 bg-muted/30 ${dragOverTarget && dragOverTarget.sectionIndex === index && dragOverTarget.danceIndex === danceIndex ? 'ring-2 ring-primary/40' : ''}`}
+                          draggable
+                          onDragStart={handleDragStart(index, danceIndex)}
+                          onDragOver={handleDragOver(index, danceIndex)}
+                          onDrop={handleDropOnDance(index, danceIndex)}
+                          onDragLeave={handleDragLeave}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                              className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
+                            {danceIndex + 1}
+                          </div>
+                          <div className="flex-1 text-sm font-medium">
+                            {language === "ru"
+                                ? (dance?.name_ru || dance?.name)
+                                : (dance?.name_de || dance?.name)}
+                          </div>
+                          <button
+                              onClick={() => removeDanceFromSection(index, danceIndex)}
+                              className="text-destructive hover:text-destructive/80"
                           >
-                            <option value="">-- {t("selectTrack")} --</option>
-                            {dance?.musicTracks?.map((track) => (
-                              <option key={track.id} value={track.id}>
-                                {track.title}{track.artist ? ` - ${track.artist}` : ''}
-                              </option>
-                            ))}
-                          </select>
+                            <Trash2 className="h-4 w-4"/>
+                          </button>
                         </div>
-                      )}
-                      
-                      {/* Show selected track for single-track dances */}
-                      {hasMusicTracks && !hasMultipleTracks && (
-                        <div className="mt-1 ml-10 text-xs text-muted-foreground">
-                          {dance?.musicTracks?.[0]?.title}
-                          {dance?.musicTracks?.[0]?.artist ? ` - ${dance.musicTracks[0].artist}` : ''}
-                        </div>
-                      )}
-                      
-                      {/* No tracks available */}
-                      {!hasMusicTracks && (
-                        <div className="mt-1 ml-10 text-xs text-muted-foreground italic">
-                          {t("noTracksAvailable")}
-                        </div>
-                      )}
-                    </div>
+
+                        {/* Music track selection */}
+                        {hasMusicTracks && hasMultipleTracks && (
+                            <div className="mt-2 ml-10">
+                              <Label className="text-xs text-muted-foreground mb-1 block">
+                                {t("selectTrack")}
+                              </Label>
+                              <select
+                                  value={entry.musicId || ""}
+                                  onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
+                                  className="w-full text-sm border rounded px-2 py-1 bg-background"
+                              >
+                                <option value="">-- {t("selectTrack")} --</option>
+                                {dance?.musicTracks?.map((track) => (
+                                    <option key={track.id} value={track.id}>
+                                      {track.title}{track.artist ? ` - ${track.artist}` : ''}
+                                    </option>
+                                ))}
+                              </select>
+                            </div>
+                        )}
+
+                        {/* Show selected track for single-track dances */}
+                        {hasMusicTracks && !hasMultipleTracks && (
+                            <div className="mt-1 ml-10 text-xs text-muted-foreground">
+                              {dance?.musicTracks?.[0]?.title}
+                              {dance?.musicTracks?.[0]?.artist ? ` - ${dance.musicTracks[0].artist}` : ''}
+                            </div>
+                        )}
+
+                        {/* No tracks available */}
+                        {!hasMusicTracks && (
+                            <div className="mt-1 ml-10 text-xs text-muted-foreground italic">
+                              {t("noTracksAvailable")}
+                            </div>
+                        )}
+                      </div>
                   )
                 })}
 
+                <div
+                    className="mt-2 h-10 rounded border border-dashed flex items-center justify-center text-xs text-muted-foreground hover:bg-accent/20"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move"
+                    }}
+                    onDrop={handleDropOnSectionEnd(index)}
+                >
+                  {t("dropHereToAddAtEnd")}
+                </div>
+
                 <DanceSelector
-                  sectionDances={section.dances}
-                  filteredDances={filteredDances}
-                  index={index}
-                  language={language}
-                  t={t}
-                  danceSearch={danceSearch}
-                  setDanceSearch={setDanceSearch}
-                  addDanceToSection={addDanceToSection}
+                    sectionDances={section.dances}
+                    filteredDances={filteredDances}
+                    index={index}
+                    language={language}
+                    t={t}
+                    danceSearch={danceSearch}
+                    setDanceSearch={setDanceSearch}
+                    addDanceToSection={addDanceToSection}
                 />
               </div>
             </div>
           ))}
 
           <Button
-            type="button"
-            variant="outline"
-            onClick={addSection}
-            className="w-full bg-transparent"
+              type="button"
+              variant="outline"
+              onClick={addSection}
+              className="w-full bg-transparent"
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4"/>
             {t("addSection")}
           </Button>
         </div>
