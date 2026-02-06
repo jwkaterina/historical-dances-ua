@@ -48,14 +48,17 @@ interface BallsContentProps {
 export function BallsContent({ balls, dances, query }: BallsContentProps) {
   const { t, language } = useLanguage()
   const [filteredBalls, setFilteredBalls] = useState<Ball[]>(balls)
-  const [selectedDate, setSelectedDate] = useState<string>("all")
   const [selectedCity, setSelectedCity] = useState<string>("all")
+  const [selectedYear, setSelectedYear] = useState<string>("all");
 
-  // Get unique dates and cities from balls
-  const uniqueDates = Array.from(new Set(balls.map(b => b.date))).sort().reverse()
+  // Get unique years and cities from balls
   const uniqueCities = Array.from(new Set(
     balls.map(b => language === "ru" ? b.place_ru : b.place_de).filter(Boolean)
   )) as string[]
+  const uniqueYears = Array.from(
+      new Set(balls.map(b => new Date(b.date).getFullYear()))
+  ).sort((a, b) => b - a) as number[];
+
 
   const getCityDisplay = (city: string | null) => {
     return city || ""
@@ -73,9 +76,11 @@ export function BallsContent({ balls, dances, query }: BallsContentProps) {
       })
     }
 
-    // Filter by date
-    if (selectedDate !== "all") {
-      filtered = filtered.filter(ball => ball.date === selectedDate)
+    // Filter by yea
+    if (selectedYear !== "all") {
+      filtered = filtered.filter(ball => {
+        return new Date(ball.date).getFullYear().toString() === selectedYear;
+      });
     }
 
     // Filter by city
@@ -88,7 +93,7 @@ export function BallsContent({ balls, dances, query }: BallsContentProps) {
 
 
     setFilteredBalls(filtered)
-  }, [balls, query, language, selectedDate, selectedCity])
+  }, [balls, query, language, selectedYear, selectedCity])
 
   return (
     <>
@@ -106,19 +111,16 @@ export function BallsContent({ balls, dances, query }: BallsContentProps) {
 
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <Select value={selectedDate} onValueChange={setSelectedDate}>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger>
-                <SelectValue placeholder={t("filterByDate")} />
+                <SelectValue placeholder={t("filterByYear")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("allDates")}</SelectItem>
-                {uniqueDates.map((date) => (
-                  <SelectItem key={date} value={date}>
-                    {new Date(date).toLocaleDateString(
-                      language === "ru" ? "ru-RU" : "de-DE",
-                      { year: "numeric", month: "long", day: "numeric" }
-                    )}
-                  </SelectItem>
+                <SelectItem value="all">{t("allYears")}</SelectItem>
+                {uniqueYears.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
                 ))}
               </SelectContent>
             </Select>
