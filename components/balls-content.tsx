@@ -80,8 +80,12 @@ export function BallsContent({ balls, dances, query }: BallsContentProps) {
 
     // Filter by city
     if (selectedCity !== "all") {
-      filtered = filtered.filter(ball => ball.place === selectedCity)
+      filtered = filtered.filter(ball => {
+        const city = language === "ru" ? ball.place_ru : ball.place_de
+        return city === selectedCity
+      })
     }
+
 
     setFilteredBalls(filtered)
   }, [balls, query, language, selectedDate, selectedCity])
