@@ -439,17 +439,6 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                   )
                 })}
 
-                <div
-                    className="mt-2 h-10 rounded border border-dashed flex items-center justify-center text-xs text-muted-foreground hover:bg-accent/20"
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.dataTransfer.dropEffect = "move"
-                    }}
-                    onDrop={handleDropOnSectionEnd(index)}
-                >
-                  {t("dropHereToAddAtEnd")}
-                </div>
-
                 <DanceSelector
                     sectionDances={section.dances}
                     filteredDances={filteredDances}
