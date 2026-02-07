@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Edit, Plus, Trash2 } from "lucide-react"
+import DanceSelector from "@/components/ui/dance-selector"
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { createBall, updateBall } from "@/app/actions/ball"
@@ -90,6 +90,12 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   const [danceSearch, setDanceSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [activeSection, setActiveSection] = useState(0)
+  const [dragOverTarget, setDragOverTarget] = useState<{ sectionIndex: number; danceIndex: number } | null>(null)
+
+  const [trackPickerOpen, setTrackPickerOpen] = useState<Record<string, boolean>>({})
+  const [tracksByDance, setTracksByDance] = useState<Record<string, MusicTrack[]>>({})
+  const [tracksLoading, setTracksLoading] = useState<Record<string, boolean>>({})
+  const [tracksError, setTracksError] = useState<Record<string, string | null>>({})
 
   if (!isAdmin) {
     return null
@@ -101,6 +107,45 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
       : (dance.name_de || dance.name)
     return displayName.toLowerCase().includes(danceSearch.toLowerCase())
   })
+
+  function closeAllTrackPickers() {
+    setTrackPickerOpen({})
+  }
+
+// 1) Provide a proper string-key wrapper for DanceSelector
+  const tStr: (key: string) => string = (key: string) => t(key as any)
+
+// 2) Harden ensureTracksLoaded against undefined danceId
+  async function ensureTracksLoaded(danceId?: string) {
+    if (!danceId) return
+    if (tracksByDance[danceId] && !tracksLoading[danceId]) return
+    try {
+      setTracksLoading(prev => ({ ...prev, [danceId]: true }))
+      setTracksError(prev => ({ ...prev, [danceId]: null }))
+      const res = await fetch(`/api/music-tracks?danceId=${encodeURIComponent(danceId)}`, { cache: "no-store" })
+      if (!res.ok) throw new Error(`Failed to load tracks (${res.status})`)
+      const data: MusicTrack[] = await res.json()
+      setTracksByDance(prev => ({ ...prev, [danceId]: data }))
+    } catch (err) {
+      setTracksError(prev => ({ ...prev, [danceId]: (err as Error).message }))
+      setTracksByDance(prev => ({ ...prev, [danceId]: [] }))
+    } finally {
+      setTracksLoading(prev => ({ ...prev, [danceId]: false }))
+    }
+  }
+
+// 3) Require and use danceId in toggleTrackPicker
+  async function toggleTrackPicker(sectionIndex: number, danceIndex: number, danceId?: string) {
+    if (!danceId) {
+      // optional: show toast to indicate missing dance id
+      toast({ title: t("error"), description: t("noTracksAvailable") })
+      return
+    }
+    const key = `${sectionIndex}:${danceIndex}`
+    setTrackPickerOpen(prev => ({ ...prev, [key]: true }))
+
+    await ensureTracksLoaded(danceId)
+  }
 
   const addSection = () => {
     setSections([
@@ -151,6 +196,50 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   const removeDanceFromSection = (sectionIndex: number, danceIndex: number) => {
     const currentDances = sections[sectionIndex].dances
     updateSection(sectionIndex, "dances", currentDances.filter((_, i) => i !== danceIndex))
+  }
+
+  const handleDragStart = (sectionIndex: number, danceIndex: number) => (e: React.DragEvent) => {
+    closeAllTrackPickers()
+    e.dataTransfer.setData("application/json", JSON.stringify({ fromSection: sectionIndex, fromIndex: danceIndex }))
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleDragOver = (sectionIndex: number, danceIndex: number) => (e: React.DragEvent) => {
+    e.preventDefault() // allow drop
+    e.dataTransfer.dropEffect = "move"
+    setDragOverTarget({ sectionIndex, danceIndex })
+  }
+
+  const handleDropOnDance = (sectionIndex: number, danceIndex: number) => (e: React.DragEvent) => {
+    e.preventDefault()
+    const payload = e.dataTransfer.getData("application/json")
+    if (!payload) return
+    const { fromSection, fromIndex } = JSON.parse(payload) as { fromSection: number; fromIndex: number }
+
+    setSections(prev => {
+      const next = prev.map(s => ({ ...s, dances: [...s.dances] }))
+      const [moved] = next[fromSection].dances.splice(fromIndex, 1)
+
+      // insert before the target danceIndex in destination section
+      const insertIndex = danceIndex + (fromSection === sectionIndex && fromIndex < danceIndex ? 0 : 0)
+      next[sectionIndex].dances.splice(insertIndex, 0, moved)
+      return next
+    })
+    setDragOverTarget(null)
+  }
+
+  const handleDragLeave = () => setDragOverTarget(null)
+
+  const resetForm = () => {
+    setNameDE(ballToEdit?.name_de || "")
+    setNameRU(ballToEdit?.name_ru || "")
+    setDate(ballToEdit?.date || "")
+    setSelectedCityDE(ballToEdit?.place_de || "")
+    setSelectedCityRU(ballToEdit?.place_ru || "")
+    setSections(initialSections)
+    setDanceSearch("")
+    setActiveSection(0)
+    closeAllTrackPickers()
   }
 
   const handleSubmit = async () => {
@@ -213,7 +302,15 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (newOpen) {
+          resetForm()
+        }
+        setOpen(newOpen)
+      }}
+    >
       <DialogTrigger asChild>
         <Button>
           <Edit className="mr-2 h-4 w-4" /> {/* Declare the Edit component */}
@@ -225,7 +322,8 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-auto max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl pb-20 sm:pb-6">
+
         <DialogHeader>
           <DialogTitle>{ballToEdit ? t("editBall") : t("createBall")}</DialogTitle>
         </DialogHeader>
@@ -302,114 +400,98 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
               <div className="space-y-3">
                 {section.dances.map((entry, danceIndex) => {
                   const dance = dances.find(d => d.id === entry.danceId)
-                  const hasMusicTracks = dance?.musicTracks && dance.musicTracks.length > 0
-                  const hasMultipleTracks = dance?.musicTracks && dance.musicTracks.length > 1
-                  
+                  const pickerKey = `${index}:${danceIndex}`
+                  const isPickerOpen = !!trackPickerOpen[pickerKey]
+
+                  const tracks = tracksByDance[entry.danceId] || []
+                  const isLoadingTracks = !!tracksLoading[entry.danceId]
+                  const loadError = tracksError[entry.danceId]
+
                   return (
-                    <div key={danceIndex} className="border rounded-md p-3 bg-muted/30">
+                    <div
+                      key={danceIndex}
+                      className={`border rounded-md p-3 bg-muted/30 ${dragOverTarget && dragOverTarget.sectionIndex === index && dragOverTarget.danceIndex === danceIndex ? 'ring-2 ring-primary/40' : ''}`}
+                      draggable
+                      onDragStart={handleDragStart(index, danceIndex)}
+                      onDragOver={handleDragOver(index, danceIndex)}
+                      onDrop={handleDropOnDance(index, danceIndex)}
+                      onDragLeave={handleDragLeave}
+                    >
                       <div className="flex items-center gap-2">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                          {danceIndex + 1}
-                        </div>
-                        <div className="flex-1 text-sm font-medium">
-                          {language === "ru"
-                            ? (dance?.name_ru || dance?.name)
-                            : (dance?.name_de || dance?.name)}
-                        </div>
-                        <button
-                          onClick={() => removeDanceFromSection(index, danceIndex)}
-                          className="text-destructive hover:text-destructive/80"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                      
-                      {/* Music track selection */}
-                      {hasMusicTracks && hasMultipleTracks && (
-                        <div className="mt-2 ml-10">
-                          <Label className="text-xs text-muted-foreground mb-1 block">
-                            {t("selectTrack")}
-                          </Label>
-                          <select
-                            value={entry.musicId || ""}
-                            onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
-                            className="w-full text-sm border rounded px-2 py-1 bg-background"
+                          <div
+                              className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
+                            {danceIndex + 1}
+                          </div>
+                          <div className="flex-1 text-sm font-medium">
+                            {language === "ru"
+                                ? (dance?.name_ru || dance?.name)
+                                : (dance?.name_de || dance?.name)}
+                          </div>
+                          <button
+                              type="button"
+                              onClick={() => toggleTrackPicker(index, danceIndex, entry.danceId)}
+                              className="text-xs px-2 py-1 rounded border hover:bg-accent/20 disabled:opacity-50"
+                              aria-expanded={isPickerOpen}
+                              aria-controls={`track-picker-${index}-${danceIndex}`}
+                              aria-busy={isLoadingTracks}
                           >
-                            <option value="">-- {t("selectTrack")} --</option>
-                            {dance?.musicTracks?.map((track) => (
-                              <option key={track.id} value={track.id}>
-                                {track.title}{track.artist ? ` - ${track.artist}` : ''}
-                              </option>
-                            ))}
-                          </select>
+                            {isLoadingTracks ? t("loading") : t("selectTrack")}
+                          </button>
+                          <button
+                              onClick={() => removeDanceFromSection(index, danceIndex)}
+                              className="text-destructive hover:text-destructive/80"
+                          >
+                            <Trash2 className="h-4 w-4"/>
+                          </button>
                         </div>
-                      )}
-                      
-                      {/* Show selected track for single-track dances */}
-                      {hasMusicTracks && !hasMultipleTracks && (
-                        <div className="mt-1 ml-10 text-xs text-muted-foreground">
-                          {dance?.musicTracks?.[0]?.title}
-                          {dance?.musicTracks?.[0]?.artist ? ` - ${dance.musicTracks[0].artist}` : ''}
-                        </div>
-                      )}
-                      
-                      {/* No tracks available */}
-                      {!hasMusicTracks && (
-                        <div className="mt-1 ml-10 text-xs text-muted-foreground italic">
-                          {t("noTracksAvailable")}
-                        </div>
-                      )}
-                    </div>
+
+                        {/* Dropdown is visible only when button toggled */}
+                        {isPickerOpen && (
+                          <div id={`track-picker-${index}-${danceIndex}`} className="mt-2 ml-10">
+
+                            {!isLoadingTracks && loadError && (
+                                <div className="text-xs text-destructive">{loadError}</div>
+                            )}
+                              {!isLoadingTracks && !loadError && (
+                                <>
+                                  {tracks.length === 0 ? (
+                                    <div className="text-xs text-muted-foreground italic">
+                                      {tStr("noTracksAvailable")}
+                                    </div>
+                                  ) : (
+                                    <select
+                                        value={entry.musicId || ""}
+                                        onChange={(e) =>
+                                            updateDanceMusicInSection(index, danceIndex, e.target.value || null)
+                                        }
+                                        className="w-full text-sm border rounded px-2 py-1 bg-background"
+                                    >
+                                      <option value="">{t("chooseLater")}</option>
+                                      {tracks.map((track) => (
+                                          <option key={track.id} value={track.id}>
+                                            {track.title}{track.artist ? ` - ${track.artist}` : ""}
+                                          </option>
+                                      ))}
+                                    </select>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                        )}
+                      </div>
                   )
                 })}
 
-                <div className="space-y-2 pt-2 border-t">
-                  <Label htmlFor={`dance-select-${index}`}>
-                    {section.dances.length > 0 ? t("addAnotherDance") : t("selectDancesForBall")}
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id={`dance-search-${index}`}
-                      placeholder={t("search")}
-                      value={danceSearch}
-                      onChange={(e) => setDanceSearch(e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
-                  <div className="border rounded max-h-60 overflow-auto">
-                    <div className="space-y-1">
-                      {filteredDances.map((dance) => {
-                        const isSelected = section.dances.some(d => d.danceId === dance.id)
-                        return (
-                          <div
-                            key={dance.id}
-                            onClick={() => {
-                              if (!isSelected) {
-                                addDanceToSection(index, dance.id)
-                                setDanceSearch("")
-                              }
-                            }}
-                            className={`px-3 py-2 cursor-pointer hover:bg-accent flex items-center justify-between ${isSelected ? 'opacity-50' : ''}`}
-                          >
-                            <span className="text-sm">
-                              {language === "ru"
-                                ? (dance.name_ru || dance.name)
-                                : (dance.name_de || dance.name)}
-                            </span>
-                            {isSelected && (
-                              <span className="text-primary text-sm font-medium">✓</span>
-                            )}
-                          </div>
-                        )
-                      })}
-                      {filteredDances.length === 0 && (
-                        <div className="px-3 py-2 text-sm text-muted-foreground">
-                          {t("noDancesFound")}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <DanceSelector
+                  sectionDances={section.dances}
+                  filteredDances={filteredDances}
+                  index={index}
+                  language={language}
+                  t={tStr}
+                  danceSearch={danceSearch}
+                  setDanceSearch={setDanceSearch}
+                  addDanceToSection={addDanceToSection}
+                />
               </div>
             </div>
           ))}
@@ -420,7 +502,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
             onClick={addSection}
             className="w-full bg-transparent"
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4"/>
             {t("addSection")}
           </Button>
         </div>

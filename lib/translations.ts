@@ -278,6 +278,9 @@ export const translations = {
     youtubePlaceholder: "https://youtube.com/watch?v=...",
     videoUrl: "Video/Schema URL",
     videoPlaceholder: "https://example.com/video.mp4",
+    dropHereToAddAtEnd: "Hierher ziehen, um am Ende hinzuzufügen",
+    loading: "Lädt...",
+    chooseLater: "Später auswählen",
     
     // Sections (Abteilung)
     section: "Abteilung",
@@ -480,6 +483,9 @@ export const translations = {
     youtubePlaceholder: "https://youtube.com/watch?v=...",
     videoUrl: "URL видео/схемы",
     videoPlaceholder: "https://example.com/video.mp4",
+    dropHereToAddAtEnd: "Перетащите сюда, чтобы добавить в конец",
+    loading: "Загрузка...",
+    chooseLater: "Выбрать позже",
     
     // Sections (Abteilung -> Отделение)
     section: "Отделение",
