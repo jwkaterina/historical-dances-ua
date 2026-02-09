@@ -230,64 +230,50 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
                         {combined.length === 0 ? (
                             <p className="text-muted-foreground">{t("noDancesSelected")}</p>
                         ) : (
-                            <div className="space-y-3">
+                            <div>
                               {combined.map((entry: any, entryIndex: number) => {
                                 if (entry.kind === 'text') {
                                   return (
-                                    <p key={`text-${entry.id}-${entryIndex}`} className="text-sm text-muted-foreground">
-                                      {entry.content}
-                                    </p>
+                                    <div key={`text-${entry.id}-${entryIndex}`} className="pl-10 pr-4 py-6 border-b last:border-0">
+                                      <div>
+                                        <p className="text-base text-[#6b3e26] whitespace-pre-wrap font-semibold">
+                                          {entry.content}
+                                        </p>
+                                      </div>
+                                    </div>
                                   )
                                 }
-                                // dance entry
+
                                 const sd = entry
                                 if (!sd.dance) return null
+                                const danceNumber = combined.slice(0, entryIndex).filter((e: any) => e.kind === 'dance').length + 1
+
                                 return (
-                                  <div key={`dance-${sd.id}-${entryIndex}`} className="pb-3 border-b last:border-0">
-                                    <div className="flex items-start gap-4">
+                                  <div key={`dance-${sd.id}-${entryIndex}`} className="py-6 border-b last:border-0">
+                                    <div className="flex items-center gap-4">
                                       <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                                <span className="text-sm font-semibold text-primary">
-                                  {entryIndex + 1}
-                                </span>
+                                        <span className="text-sm font-semibold text-primary">{danceNumber}</span>
                                       </div>
                                       <Link
-                                          href={`/dance/${sd.dance.id}?ballId=${ball.id}`}
-                                          className="flex-1 transition-colors hover:text-primary"
+                                        href={`/dance/${sd.dance.id}?ballId=${ball.id}`}
+                                        className="flex-1 transition-colors hover:text-primary cursor-pointer"
+                                        title={`${getDisplayDanceName(sd.dance)} — open dance details`}
                                       >
                                         <div>
-                                          <h4 className="font-semibold text-foreground">
-                                            {getDisplayDanceName(sd.dance)}
-                                          </h4>
+                                          <h4 className="font-semibold text-[#6b3e26] underline">{getDisplayDanceName(sd.dance)}</h4>
                                           {sd.dance.difficulty && (
-                                              <p className="text-xs text-muted-foreground mt-1">
-                                                {getDifficultyLabel(sd.dance.difficulty)}
-                                              </p>
+                                            <p className="text-xs text-muted-foreground mt-0 no-underline">{getDifficultyLabel(sd.dance.difficulty)}</p>
                                           )}
                                         </div>
                                       </Link>
                                     </div>
-                                    {sd.music?.audio_url && (() => {
-                                      const danceData = allDances.find(d => d.id === sd.dance?.id)
-                                      const hasMultipleTracks = danceData?.musicTracks && danceData.musicTracks.length > 1
-                                      return (
-                                          <div className="ml-10 mt-2">
-                                            <audio
-                                                controls
-                                                className="w-full h-10"
-                                                controlsList="nodownload"
-                                                crossOrigin="anonymous"
-                                                src={sd.music.audio_url}
-                                            >
-                                              Your browser does not support the audio element.
-                                            </audio>
-                                            {hasMultipleTracks && (
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                  {sd.music.title}{sd.music.artist ? ` - ${sd.music.artist}` : ""}
-                                                </p>
-                                            )}
-                                          </div>
-                                      )
-                                    })()}
+                                    {sd.music?.audio_url && (
+                                      <div className="ml-10 pt-4">
+                                        <audio controls className="w-full h-10" controlsList="nodownload" crossOrigin="anonymous" src={sd.music.audio_url}>
+                                          Your browser does not support the audio element.
+                                        </audio>
+                                      </div>
+                                    )}
                                   </div>
                                 )
                               })}
