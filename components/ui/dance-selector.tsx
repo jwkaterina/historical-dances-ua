@@ -1,7 +1,5 @@
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 
 function DanceSelector({
                            sectionDances,
@@ -12,8 +10,8 @@ function DanceSelector({
                            danceSearch,
                            setDanceSearch,
                            addDanceToSection,
-                            open,
-                            onOpenChange,
+                           open,
+                           onOpenChange,
                        }: {
     sectionDances: any[]
     filteredDances: any[]
@@ -26,29 +24,18 @@ function DanceSelector({
     open?: boolean
     onOpenChange?: (open: boolean) => void
 }) {
-    const [showInput, setShowInput] = useState(sectionDances.length === 0)
-
     useEffect(() => {
-        if (open) {
-            setShowInput(true)
-        }
+        // Optional side effects on open/close
     }, [open])
 
     const handleAddDance = (danceId: string) => {
         addDanceToSection(index, danceId)
         setDanceSearch("")
-        setShowInput(false)
         onOpenChange?.(false)
     }
 
-    // When collapsed and there are existing dances, render nothing — parent controls opening now.
-    if (!showInput && sectionDances.length > 0) {
-        return null
-    }
-
     return (
-        <div className="space-y-2 pt-2 border-t">
-
+        <div className={`space-y-2 pt-2 border-t transition-[max-height,opacity,padding] duration-200 ease-in-out ${open ? 'opacity-100 max-h-[400px] py-2' : 'opacity-0 max-h-0 py-0 overflow-hidden'}`}>
             <div className="flex gap-2">
                 <Input
                     id={`dance-search-${index}`}
@@ -61,7 +48,7 @@ function DanceSelector({
             <div className="border rounded max-h-60 overflow-auto">
                 <div className="space-y-1">
                     {filteredDances.map((dance) => {
-                        const isSelected = sectionDances.some(d => d.danceId === dance.id)
+                        const isSelected = sectionDances.some((d: any) => d.danceId === dance.id)
                         return (
                             <div
                                 key={dance.id}

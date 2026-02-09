@@ -3,8 +3,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
-interface SectionText {
-  content: string
+interface SectionText {content_de: string
+  content_ru: string
 }
 
 interface SectionDanceEntry {
@@ -27,7 +27,8 @@ interface Section {
     danceId?: string
     musicId?: string | null
     // text-specific
-    content?: string
+    content_de?: string
+    content_ru?: string
   }>
 }
 
@@ -86,7 +87,8 @@ export async function getBalls() {
           section_texts (
             id,
             order_index,
-            content
+            content_de,
+            content_ru
           )
         )
       `
@@ -157,7 +159,8 @@ export async function getBallById(id: string) {
           ),section_texts (
             id,
             order_index,
-            content
+            content_de,
+            content_ru
           )
         )
       `
@@ -251,9 +254,15 @@ export async function createBall(ballData: BallData) {
             if (dancesError) throw dancesError
           }
 
+          // Insert texts with localized fields
           const textsToInsert = sorted
               .filter(e => e.kind === 'text')
-              .map((e: any) => ({ section_id: sectionData.id, order_index: e.order_index, content: e.content?.trim() }))
+              .map((e: any) => ({
+                section_id: sectionData.id,
+                order_index: e.order_index,
+                content_de: (e.content_de ?? e.content ?? '').trim(),
+                content_ru: (e.content_ru ?? e.content ?? '').trim(),
+              }))
           if (textsToInsert.length > 0) {
             const { error: textsError } = await supabase.from('section_texts').insert(textsToInsert)
             if (textsError) throw textsError
@@ -365,9 +374,15 @@ export async function updateBall(id: string, ballData: BallData) {
           if (dancesError) throw dancesError
         }
 
+        // Insert texts with localized fields
         const textsToInsert = sorted
             .filter(e => e.kind === 'text')
-            .map((e: any) => ({ section_id: sectionData.id, order_index: e.order_index, content: e.content?.trim() }))
+            .map((e: any) => ({
+              section_id: sectionData.id,
+              order_index: e.order_index,
+              content_de: (e.content_de ?? e.content ?? '').trim(),
+              content_ru: (e.content_ru ?? e.content ?? '').trim(),
+            }))
         if (textsToInsert.length > 0) {
           const { error: textsError } = await supabase.from('section_texts').insert(textsToInsert)
           if (textsError) throw textsError

@@ -54,7 +54,8 @@ interface SectionDance {
 interface SectionText {
   id: string
   order_index: number
-  content: string
+  content_ru: string
+  content_de: string
 }
 
 interface Section {
@@ -116,6 +117,14 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
 
   const getDisplaySectionName = (index: number) => {
     return language === "ru" ? `Отделение ${index + 1}` : `Abteilung ${index + 1}`
+  }
+
+  // Display section text by current language with safe fallbacks
+  const getDisplayText = (text: any) => {
+    if (!text) return ""
+    const ru = (text as any).content_ru ?? (text as any).ru ?? (text as any).text_ru ?? (text as any).content
+    const de = (text as any).content_de ?? (text as any).de ?? (text as any).text_de ?? (text as any).content
+    return language === "ru" ? (ru ?? "") : (de ?? "")
   }
 
   const handleDelete = async () => {
@@ -214,7 +223,8 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
                   kind: 'text' as const,
                   id: st.id,
                   order_index: st.order_index,
-                  content: st.content,
+                  content_ru: st.content_ru,
+                  content_de: st.content_de,
                 }))
 
                 const combined = [...danceEntries, ...textEntries].sort((a, b) => a.order_index - b.order_index)
@@ -237,7 +247,7 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
                                     <div key={`text-${entry.id}-${entryIndex}`} className="pl-10 pr-4 py-6 border-b last:border-0">
                                       <div>
                                         <p className="text-base text-[#6b3e26] whitespace-pre-wrap font-semibold">
-                                          {entry.content}
+                                          {getDisplayText(entry)}
                                         </p>
                                       </div>
                                     </div>

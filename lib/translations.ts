@@ -322,7 +322,8 @@ export const translations = {
     saving: "Wird gespeichert...",
     create: "Erstellen",
     creating: "Wird erstellt...",
-    
+    edit: "Bearbeiten",
+
     // Dance card
     dance: "Tanz",
     
@@ -529,7 +530,8 @@ export const translations = {
     saving: "Сохранение...",
     create: "Создать",
     creating: "Создание...",
-    
+    edit: "Редактировать",
+
     // Dance card
     dance: "Танец",
     
