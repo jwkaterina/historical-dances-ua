@@ -1,7 +1,5 @@
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useEffect } from "react"
 
 function DanceSelector({
                            sectionDances,
@@ -12,6 +10,8 @@ function DanceSelector({
                            danceSearch,
                            setDanceSearch,
                            addDanceToSection,
+                           open,
+                           onOpenChange,
                        }: {
     sectionDances: any[]
     filteredDances: any[]
@@ -21,37 +21,25 @@ function DanceSelector({
     danceSearch: string
     setDanceSearch: (v: string) => void
     addDanceToSection: (sectionIndex: number, danceId: string) => void
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
 }) {
-    const [showInput, setShowInput] = useState(sectionDances.length === 0)
+    useEffect(() => {
+        // Optional side effects on open/close
+    }, [open])
 
     const handleAddDance = (danceId: string) => {
         addDanceToSection(index, danceId)
         setDanceSearch("")
-        setShowInput(false)
-    }
-
-    if (!showInput && sectionDances.length > 0) {
-        return (
-            <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => setShowInput(true)}
-            >
-                {t("addAnotherDance")}
-            </Button>
-        )
+        onOpenChange?.(false)
     }
 
     return (
-        <div className="space-y-2 pt-2 border-t">
-            <Label htmlFor={`dance-select-${index}`}>
-                {sectionDances.length > 0 ? t("addAnotherDance") : t("selectDancesForBall")}
-            </Label>
+        <div className={`space-y-2 pt-2 border-t transition-[max-height,opacity,padding] duration-200 ease-in-out ${open ? 'opacity-100 max-h-[400px] py-2' : 'opacity-0 max-h-0 py-0 overflow-hidden'}`}>
             <div className="flex gap-2">
                 <Input
                     id={`dance-search-${index}`}
-                    placeholder={t("search")}
+                    placeholder={t("searchDances")}
                     value={danceSearch}
                     onChange={(e) => setDanceSearch(e.target.value)}
                     className="flex-1"
@@ -60,7 +48,7 @@ function DanceSelector({
             <div className="border rounded max-h-60 overflow-auto">
                 <div className="space-y-1">
                     {filteredDances.map((dance) => {
-                        const isSelected = sectionDances.some(d => d.danceId === dance.id)
+                        const isSelected = sectionDances.some((d: any) => d.danceId === dance.id)
                         return (
                             <div
                                 key={dance.id}
