@@ -3,6 +3,10 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
+interface SectionText {
+  content: string
+}
+
 interface SectionDanceEntry {
   danceId: string
   musicId?: string | null
@@ -13,7 +17,18 @@ interface Section {
   name: string
   name_de: string
   name_ru: string
-  dances: SectionDanceEntry[]
+  // legacy arrays (may be omitted) or new unified `entries` array
+  dances?: SectionDanceEntry[]
+  texts?: SectionText[]
+  entries?: Array<{
+    kind: 'dance' | 'text'
+    order_index: number
+    // dance-specific
+    danceId?: string
+    musicId?: string | null
+    // text-specific
+    content?: string
+  }>
 }
 
 interface BallData {
@@ -31,9 +46,9 @@ export async function getBalls() {
     const supabase = await createClient()
 
     const { data, error } = await supabase
-      .from("balls")
-      .select(
-        `
+        .from("balls")
+        .select(
+            `
         id,
         name,
         name_de,
@@ -45,25 +60,51 @@ export async function getBalls() {
         created_at,
         ball_sections (
           id,
+          name,
+          name_de,
+          name_ru,
+          order_index,
           section_dances (
-            id
+            id,
+            order_index,
+            dance_id,
+            music_id,
+            dances:dance_id (
+              id,
+              name,
+              name_de,
+              name_ru,
+              difficulty
+            ),
+            music:music_id (
+              id,
+              title,
+              artist,
+              audio_url
+            )
+          ),
+          section_texts (
+            id,
+            order_index,
+            content
           )
         )
       `
-      )
-      .order("date", { ascending: false })
+        )
+        .order("date", { ascending: false })
 
     if (error) {
       console.log("[v0] Ball fetch error:", error)
       return []
     }
-    
+
     // Calculate dance count from ball_sections and section_dances
-    const ballsWithCounts = (data || []).map(ball => ({
+    const ballsWithCounts = (data || []).map((ball: any) => ({
       ...ball,
-      ball_dances: ball.ball_sections?.flatMap((section: any) => section.section_dances || []) || []
+      ball_dances:
+          ball.ball_sections?.flatMap((section: any) => section.section_dances || []) || []
     }))
-    
+
     return ballsWithCounts
   } catch (error) {
     console.log("[v0] Ball fetch exception:", error)
@@ -76,9 +117,9 @@ export async function getBallById(id: string) {
     const supabase = await createClient()
 
     const { data, error } = await supabase
-      .from("balls")
-      .select(
-        `
+        .from("balls")
+        .select(
+            `
         id,
         name,
         name_de,
@@ -97,27 +138,32 @@ export async function getBallById(id: string) {
           order_index,
           section_dances (
             id,
-            dances (
+            order_index,
+            dance_id,
+            music_id,
+            dances:dance_id (
               id,
               name,
               name_de,
               name_ru,
               difficulty
             ),
-            order_index,
-            music_id,
             music:music_id (
               id,
               title,
               artist,
               audio_url
             )
+          ),section_texts (
+            id,
+            order_index,
+            content
           )
         )
       `
-      )
-      .eq("id", id)
-      .single()
+        )
+        .eq("id", id)
+        .single()
 
     if (error) {
       console.log("[v0] Ball get error:", error)
@@ -134,38 +180,35 @@ export async function createBall(ballData: BallData) {
   try {
     const supabase = await createClient()
 
-    // Check authentication
     const {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
-    // Create ball
     const { data: ball, error: ballError } = await supabase
-      .from("balls")
-      .insert({
-        name: ballData.name,
-        name_de: ballData.name_de,
-        name_ru: ballData.name_ru,
-        date: ballData.date,
-        place: ballData.place_de, // Use German city as primary place
-        place_de: ballData.place_de,
-        place_ru: ballData.place_ru,
-        user_id: user.id,
-      })
-      .select()
-      .single()
+        .from("balls")
+        .insert({
+          name: ballData.name,
+          name_de: ballData.name_de,
+          name_ru: ballData.name_ru,
+          date: ballData.date,
+          place: ballData.place_de,
+          place_de: ballData.place_de,
+          place_ru: ballData.place_ru,
+          user_id: user.id,
+        })
+        .select()
+        .single()
 
     if (ballError) throw ballError
 
-    // Create sections with dances if any sections exist
     if (ballData.sections && ballData.sections.length > 0) {
-      for (const section of ballData.sections) {
-        try {
-          const { data: sectionData, error: sectionError } = await supabase
+      for (const [sIdx, section] of ballData.sections.entries()) {
+        const { data: sectionData, error: sectionError } = await supabase
             .from("ball_sections")
             .insert({
               ball_id: ball.id,
+              order_index: sIdx,
               name: section.name,
               name_de: section.name_de,
               name_ru: section.name_ru,
@@ -173,31 +216,48 @@ export async function createBall(ballData: BallData) {
             .select()
             .single()
 
-          if (sectionError) {
-            console.log("[v0] Section creation error (non-fatal):", sectionError)
-            continue
+        if (sectionError) throw sectionError
+
+        // Build a local entries array. Prefer `entries` if provided by the client.
+        let entries: any[] = Array.isArray((section as any).entries) ? [...(section as any).entries] : []
+        // Only use legacy `dances`/`texts` if no unified `entries` were provided
+        if (entries.length === 0 && (((section as any).dances && (section as any).dances.length > 0) || ((section as any).texts && (section as any).texts.length > 0))) {
+          const legacyDances = ((section as any).dances || []).map((d: any, i: number) => ({ kind: 'dance', danceId: d.danceId || d.dance_id, musicId: d.musicId ?? d.music_id ?? null, order_index: i }))
+          const legacyTexts = ((section as any).texts || []).map((t: any, i: number) => ({ kind: 'text', content: t.content, order_index: ((section as any).dances || []).length + i }))
+          entries.push(...legacyDances, ...legacyTexts)
+        }
+
+        if (entries && entries.length > 0) {
+          // validate unique order_index
+          const idxs = entries.map(e => e.order_index)
+          const uniqueIdxs = new Set(idxs)
+          if (uniqueIdxs.size !== idxs.length) {
+            // find duplicate values
+            const counts: Record<number, number> = {}
+            idxs.forEach((v: number) => { counts[v] = (counts[v] || 0) + 1 })
+            const duplicates = Object.keys(counts).filter(k => counts[Number(k)] > 1)
+            throw new Error(`Duplicate order_index values in section entries for section ${sIdx}: ${duplicates.join(',')}`)
           }
 
-          // Add dances to section
-          if (section.dances.length > 0) {
-            const dancesToInsert = section.dances.map((entry, index) => ({
-              section_id: sectionData.id,
-              dance_id: entry.danceId,
-              order_index: index,
-              music_id: entry.musicId || null,
-            }))
+          // normalize to sorted order by order_index
+          const sorted = entries.slice().sort((a, b) => a.order_index - b.order_index)
 
-            const { error: dancesError } = await supabase
-              .from("section_dances")
-              .insert(dancesToInsert)
-
-            if (dancesError) {
-              console.log("[v0] Adding dances error (non-fatal):", dancesError)
-            }
+          // Insert dances and texts separately using provided order_index values
+          const dancesToInsert = sorted
+              .filter(e => e.kind === 'dance')
+              .map((e: any) => ({ section_id: sectionData.id, order_index: e.order_index, dance_id: e.danceId, music_id: e.musicId ?? null }))
+          if (dancesToInsert.length > 0) {
+            const { error: dancesError } = await supabase.from('section_dances').insert(dancesToInsert)
+            if (dancesError) throw dancesError
           }
-        } catch (sectionError) {
-          console.log("[v0] Section processing error (non-fatal):", sectionError)
-          // Continue creating other sections even if one fails
+
+          const textsToInsert = sorted
+              .filter(e => e.kind === 'text')
+              .map((e: any) => ({ section_id: sectionData.id, order_index: e.order_index, content: e.content?.trim() }))
+          if (textsToInsert.length > 0) {
+            const { error: textsError } = await supabase.from('section_texts').insert(textsToInsert)
+            if (textsError) throw textsError
+          }
         }
       }
     }
@@ -214,65 +274,104 @@ export async function updateBall(id: string, ballData: BallData) {
   try {
     const supabase = await createClient()
 
-    // Check authentication
     const {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
-    // Update ball
     const { error: ballError } = await supabase
-      .from("balls")
-      .update({
-        name: ballData.name,
-        name_de: ballData.name_de,
-        name_ru: ballData.name_ru,
-        date: ballData.date,
-        place: ballData.place_de,
-        place_de: ballData.place_de,
-        place_ru: ballData.place_ru,
-      })
-      .eq("id", id)
-
+        .from("balls")
+        .update({
+          name: ballData.name,
+          name_de: ballData.name_de,
+          name_ru: ballData.name_ru,
+          date: ballData.date,
+          place: ballData.place_de,
+          place_de: ballData.place_de,
+          place_ru: ballData.place_ru,
+        })
+        .eq("id", id)
     if (ballError) throw ballError
 
-    // Delete existing sections
-    const { error: deleteError } = await supabase
-      .from("ball_sections")
-      .delete()
-      .eq("ball_id", id)
-
-    if (deleteError) throw deleteError
-
-    // Create new sections with dances
-    for (const section of ballData.sections) {
-      const { data: sectionData, error: sectionError } = await supabase
+    // Fetch existing sections to cascade delete their dances and texts
+    const { data: existingSections, error: fetchSectionsError } = await supabase
         .from("ball_sections")
-        .insert({
-          ball_id: id,
-          name: section.name,
-          name_de: section.name_de,
-          name_ru: section.name_ru,
-        })
-        .select()
-        .single()
+        .select("id")
+        .eq("ball_id", id)
+    if (fetchSectionsError) throw fetchSectionsError
 
+    const sectionIds = (existingSections || []).map(s => s.id)
+
+    if (sectionIds.length > 0) {
+      const { error: delTextsError } = await supabase
+          .from("section_texts")
+          .delete()
+          .in("section_id", sectionIds)
+      if (delTextsError) throw delTextsError
+
+      const { error: delDancesError } = await supabase
+          .from("section_dances")
+          .delete()
+          .in("section_id", sectionIds)
+      if (delDancesError) throw delDancesError
+    }
+
+    const { error: deleteSectionsError } = await supabase
+        .from("ball_sections")
+        .delete()
+        .eq("ball_id", id)
+    if (deleteSectionsError) throw deleteSectionsError
+
+    // Recreate sections with dances and texts
+    for (const [sIdx, section] of ballData.sections.entries()) {
+      const { data: sectionData, error: sectionError } = await supabase
+          .from("ball_sections")
+          .insert({
+            ball_id: id,
+            order_index: sIdx,
+            name: section.name,
+            name_de: section.name_de,
+            name_ru: section.name_ru,
+          })
+          .select()
+          .single()
       if (sectionError) throw sectionError
 
-      // Add dances to section
-      if (section.dances.length > 0) {
-        const dancesToInsert = section.dances.map((entry, index) => ({
-          section_id: sectionData.id,
-          dance_id: entry.danceId,
-          order_index: index,
-          music_id: entry.musicId || null,
-        }))
+      // Build entries local copy, prefer unified `entries` if provided
+      let entries: any[] = Array.isArray((section as any).entries) ? [...(section as any).entries] : []
+      if (entries.length === 0 && (((section as any).dances && (section as any).dances.length > 0) || ((section as any).texts && (section as any).texts.length > 0))) {
+        const legacyDances = ((section as any).dances || []).map((d: any, i: number) => ({ kind: 'dance', danceId: d.danceId || d.dance_id, musicId: d.musicId ?? d.music_id ?? null, order_index: i }))
+        const legacyTexts = ((section as any).texts || []).map((t: any, i: number) => ({ kind: 'text', content: t.content, order_index: ((section as any).dances || []).length + i }))
+        entries.push(...legacyDances, ...legacyTexts)
+      }
 
-        const { error: dancesError } = await supabase
-          .from("section_dances")
-          .insert(dancesToInsert)
+      if (entries && entries.length > 0) {
+        const idxs = entries.map(e => e.order_index)
+        const uniqueIdxs = new Set(idxs)
+        if (uniqueIdxs.size !== idxs.length) {
+          const counts: Record<number, number> = {}
+          idxs.forEach((v: number) => { counts[v] = (counts[v] || 0) + 1 })
+          const duplicates = Object.keys(counts).filter(k => counts[Number(k)] > 1)
+          throw new Error(`Duplicate order_index values in section entries for section ${sIdx}: ${duplicates.join(',')}`)
+        }
 
-        if (dancesError) throw dancesError
+        const sorted = entries.slice().sort((a, b) => a.order_index - b.order_index)
+
+        const dancesToInsert = sorted
+            .filter(e => e.kind === 'dance')
+            .map((e: any) => ({ section_id: sectionData.id, order_index: e.order_index, dance_id: e.danceId, music_id: e.musicId ?? null }))
+        if (dancesToInsert.length > 0) {
+          const { error: dancesError } = await supabase.from('section_dances').insert(dancesToInsert)
+          if (dancesError) throw dancesError
+        }
+
+        const textsToInsert = sorted
+            .filter(e => e.kind === 'text')
+            .map((e: any) => ({ section_id: sectionData.id, order_index: e.order_index, content: e.content?.trim() }))
+        if (textsToInsert.length > 0) {
+          const { error: textsError } = await supabase.from('section_texts').insert(textsToInsert)
+          if (textsError) throw textsError
+        }
       }
     }
 
@@ -284,38 +383,17 @@ export async function updateBall(id: string, ballData: BallData) {
   }
 }
 
-export async function deleteBall(id: string) {
-  try {
-    const supabase = await createClient()
-
-    // Check authentication
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) throw new Error("Not authenticated")
-
-    const { error } = await supabase.from("balls").delete().eq("id", id)
-
-    if (error) throw error
-
-    revalidatePath("/balls")
-  } catch (error) {
-    console.log("[v0] Delete ball error:", error)
-    throw error
-  }
-}
-
 export async function getDancesForBall() {
   try {
     const supabase = await createClient()
 
     const { data, error } = await supabase
-      .from("dances")
-      .select(`
-        id, 
-        name, 
-        name_de, 
-        name_ru, 
+        .from("dances")
+        .select(`
+        id,
+        name,
+        name_de,
+        name_ru,
         difficulty,
         dance_music (
           music:music_id (
@@ -326,21 +404,19 @@ export async function getDancesForBall() {
           )
         )
       `)
-      .order("name", { ascending: true })
+        .order("name", { ascending: true })
 
     if (error) {
       console.log("[v0] Dances fetch error:", error)
       return []
     }
-    
-    // Transform data to include music tracks array
-    const dancesWithMusic = (data || []).map(dance => ({
+
+    const dancesWithMusic = (data || []).map((dance: any) => ({
       ...dance,
-      musicTracks: dance.dance_music
-        ?.map((dm: any) => dm.music)
-        .filter((m: any) => m && m.audio_url) || []
+      musicTracks:
+          dance.dance_music?.map((dm: any) => dm.music).filter((m: any) => m && m.audio_url) || []
     }))
-    
+
     return dancesWithMusic
   } catch (error) {
     console.log("[v0] Dances fetch exception:", error)
@@ -353,24 +429,40 @@ export async function getExistingCities() {
     const supabase = await createClient()
 
     const { data, error } = await supabase
-      .from("balls")
-      .select("place")
-      .not("place", "is", null)
+        .from("balls")
+        .select("place")
+        .not("place", "is", null)
 
     if (error) {
       console.log("[v0] Cities fetch error:", error)
       return []
     }
 
-    // Get unique cities and remove duplicates
-    const uniqueCities = Array.from(
-      new Set(data?.map(ball => ball.place).filter(Boolean))
-    ) as string[]
-
-    console.log("[v0] Existing cities:", uniqueCities)
+    const uniqueCities = Array.from(new Set(data?.map((ball: any) => ball.place).filter(Boolean))) as string[]
     return uniqueCities.sort()
   } catch (error) {
     console.log("[v0] Cities fetch exception:", error)
     return []
   }
 }
+
+export async function deleteBall(id: string) {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    const { error } = await supabase.from("balls").delete().eq("id", id)
+    if (error) throw error
+
+    revalidatePath("/balls")
+  } catch (error) {
+    console.log("[v0] Delete ball error:", error)
+    throw error
+  }
+}
+
+// End of file
