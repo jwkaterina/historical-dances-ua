@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 function DanceSelector({
                            sectionDances,
@@ -12,6 +12,8 @@ function DanceSelector({
                            danceSearch,
                            setDanceSearch,
                            addDanceToSection,
+                            open,
+                            onOpenChange,
                        }: {
     sectionDances: any[]
     filteredDances: any[]
@@ -21,37 +23,36 @@ function DanceSelector({
     danceSearch: string
     setDanceSearch: (v: string) => void
     addDanceToSection: (sectionIndex: number, danceId: string) => void
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
 }) {
     const [showInput, setShowInput] = useState(sectionDances.length === 0)
+
+    useEffect(() => {
+        if (open) {
+            setShowInput(true)
+        }
+    }, [open])
 
     const handleAddDance = (danceId: string) => {
         addDanceToSection(index, danceId)
         setDanceSearch("")
         setShowInput(false)
+        onOpenChange?.(false)
     }
 
+    // When collapsed and there are existing dances, render nothing — parent controls opening now.
     if (!showInput && sectionDances.length > 0) {
-        return (
-            <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => setShowInput(true)}
-            >
-                {t("addAnotherDance")}
-            </Button>
-        )
+        return null
     }
 
     return (
         <div className="space-y-2 pt-2 border-t">
-            <Label htmlFor={`dance-select-${index}`}>
-                {sectionDances.length > 0 ? t("addAnotherDance") : t("selectDancesForBall")}
-            </Label>
+
             <div className="flex gap-2">
                 <Input
                     id={`dance-search-${index}`}
-                    placeholder={t("search")}
+                    placeholder={t("searchDances")}
                     value={danceSearch}
                     onChange={(e) => setDanceSearch(e.target.value)}
                     className="flex-1"

@@ -129,6 +129,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   const [tracksError, setTracksError] = useState<Record<string, string | null>>({})
   const pickerRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [pickerHeights, setPickerHeights] = useState<Record<string, number>>({})
+  const [danceSelectorOpen, setDanceSelectorOpen] = useState<Record<number, boolean>>({})
 
   if (!isAdmin) return null
 
@@ -278,6 +279,8 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
     setSections(initialSections)
     setDanceSearch("")
     setActiveSection(0)
+    // close any open dance selector panels so they are not visible next time the dialog opens
+    setDanceSelectorOpen({})
     closeAllTrackPickers()
   }
 
@@ -399,14 +402,15 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
 
           <div className="space-y-4">
             <Label>{t("sections")}</Label>
-            {sections.map((section, index) => (
+            {sections.map((section, index) => {
+              return (
                 <div key={index} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">{t("section")} {index + 1}</h3>
                     {sections.length > 1 && (
-                        <button onClick={() => removeSection(index)} className="text-destructive hover:text-destructive/80" aria-label="Remove section" title="Remove section">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                      <button onClick={() => removeSection(index)} className="text-destructive hover:text-destructive/80" aria-label="Remove section" title="Remove section">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     )}
                   </div>
 
@@ -415,187 +419,179 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                       const pickerKey = `${index}:${danceIndex}`
                       const isPickerOpen = !!trackPickerOpen[pickerKey]
                       const dance = entry.kind === "dance" ? dances.find(d => d.id === entry.danceId) : null
-
                       const tracks = entry.kind === "dance" ? (tracksByDance[(entry as any).danceId] || []) : []
                       const isLoadingTracks = entry.kind === "dance" ? !!tracksLoading[(entry as any).danceId] : false
                       const loadError = entry.kind === "dance" ? tracksError[(entry as any).danceId] : null
-
-                      // compute dance number ignoring text entries
-                      const danceNumber = entry.kind === "dance"
-                          ? section.dances.slice(0, danceIndex).filter(d => d.kind === "dance").length + 1
-                          : null
+                      const danceNumber = entry.kind === "dance" ? section.dances.slice(0, danceIndex).filter(d => d.kind === "dance").length + 1 : null
 
                       return (
-                          <div
-                              key={danceIndex}
-                              className={`border rounded-md p-3 bg-muted/30 ${dragOverTarget && dragOverTarget.sectionIndex === index && dragOverTarget.danceIndex === danceIndex ? "ring-2 ring-primary/40" : ""}`}
-                              onDragOver={handleDragOver(index, danceIndex)}
-                              onDrop={handleDropOnDance(index, danceIndex)}
-                              onDragLeave={handleDragLeave}
-                          >
-                            <div className="flex items-center gap-2">
-                        <span
-                            className="flex-shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
-                            role="button"
-                            aria-label="Drag entry"
-                            draggable
-                            onDragStart={handleDragStart(index, danceIndex)}
-                            onDragEnd={handleDragLeave}
-                            title="Drag"
+                        <div
+                          key={danceIndex}
+                          className={`border rounded-md p-3 bg-muted/30 ${dragOverTarget && dragOverTarget.sectionIndex === index && dragOverTarget.danceIndex === danceIndex ? "ring-2 ring-primary/40" : ""}`}
+                          onDragOver={handleDragOver(index, danceIndex)}
+                          onDrop={handleDropOnDance(index, danceIndex)}
+                          onDragLeave={handleDragLeave}
                         >
-                          <GripVertical className="h-4 w-4" />
-                        </span>
-
-                              {entry.kind === "dance" && (
-                                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                                    {danceNumber}
-                                  </div>
-                              )}
-
-                              <div className="flex-1">
-                                {entry.kind === "dance" ? (
-                                    <div className="flex items-center gap-2">
-                                      <div className="flex-1 text-sm font-medium">
-                                        {language === "ru" ? (dance?.name_ru || dance?.name) : (dance?.name_de || dance?.name)}
-                                      </div>
-                                      <button
-                                          type="button"
-                                          onClick={() => toggleTrackPicker(index, danceIndex, (entry as any).danceId)}
-                                          className="text-xs px-2 py-1 rounded border hover:bg-accent/20 disabled:opacity-50 min-w-[6.5rem]"
-                                          aria-expanded={isPickerOpen}
-                                          aria-controls={`track-picker-${index}-${danceIndex}`}
-                                          aria-busy={isLoadingTracks}
-                                          disabled={isLoadingTracks}
-                                      >
-                                        {isLoadingTracks ? (tStr("loading") || "Loading…") : t("selectTrack")}
-                                      </button>
-                                      <button
-                                          onClick={() => removeEntryFromSection(index, danceIndex)}
-                                          className="text-destructive hover:text-destructive/80"
-                                          aria-label="Remove dance"
-                                          title="Remove"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </button>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2">
-                                      {(entry as any).isEditing ? (
-                                          <>
-                                  <textarea
-                                      value={(entry as any).content || ""}
-                                      onChange={(e) => updateTextEntry(index, danceIndex, e.target.value)}
-                                      className="w-full min-h-[80px] text-sm border rounded px-2 py-1 bg-background"
-                                      placeholder={tStr("sectionIntro") || "Text before dances..."}
-                                  />
-                                            <button
-                                                type="button"
-                                                onClick={() => saveTextEntry(index, danceIndex)}
-                                                className="text-xs px-2 py-1 rounded border hover:bg-accent/20"
-                                            >
-                                              <Save className="inline-block mr-1 h-3 w-3" />
-                                              {tStr("save") || "Save"}
-                                            </button>
-                                          </>
-                                      ) : (
-                                          <div className="flex items-start justify-between gap-2">
-                                            <div className="text-sm whitespace-pre-wrap">{(entry as any).content}</div>
-                                            <div className="flex items-center gap-2">
-                                              <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                    const current = [...sections[index].dances]
-                                                    const e = current[danceIndex]
-                                                    if (e?.kind === "text") {
-                                                      current[danceIndex] = { ...(e as any), isEditing: true }
-                                                      updateSection(index, "dances", current)
-                                                    }
-                                                  }}
-                                                  className="text-xs px-2 py-1 rounded border hover:bg-accent/20"
-                                              >
-                                                {tStr("edit") || "Edit"}
-                                              </button>
-                                              <button
-                                                  onClick={() => removeEntryFromSection(index, danceIndex)}
-                                                  className="text-destructive hover:text-destructive/80"
-                                                  aria-label="Remove text"
-                                                  title="Remove"
-                                              >
-                                                <Trash2 className="h-4 w-4" />
-                                              </button>
-                                            </div>
-                                          </div>
-                                      )}
-                                    </div>
-                                )}
-                              </div>
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="flex-shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+                              role="button"
+                              aria-label="Drag entry"
+                              draggable
+                              onDragStart={handleDragStart(index, danceIndex)}
+                              onDragEnd={handleDragLeave}
+                              title="Drag"
+                            >
+                              <GripVertical className="h-4 w-4" />
+                            </span>
 
                             {entry.kind === "dance" && (
-                                <div
-                                    id={`track-picker-${index}-${danceIndex}`}
-                                    ref={(el) => {
-                                      pickerRefs.current[pickerKey] = el
-                                    }}
-                                    className={`mt-2 ml-10 overflow-hidden transition-[max-height,padding,opacity] duration-300 ease-in-out ${isPickerOpen ? "opacity-100 py-2" : "opacity-0 py-0"}`}
-                                    style={{ maxHeight: isPickerOpen ? (pickerHeights[pickerKey] || 0) : 0 }}
-                                >
-                                  {!isLoadingTracks && loadError && (
-                                      <div className="text-xs text-destructive">{loadError}</div>
-                                  )}
-                                  {!isLoadingTracks && !loadError && (
-                                      <>
-                                        {tracks.length === 0 ? (
-                                            <div className="text-xs text-muted-foreground italic">
-                                              {tStr("noTracksAvailable")}
-                                            </div>
-                                        ) : (
-                                            <select
-                                                value={(entry as any).musicId || ""}
-                                                onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
-                                                className="w-full text-sm border rounded px-2 py-1 bg-background"
-                                            >
-                                              <option value="">{t("chooseLater")}</option>
-                                              {tracks.map((track) => (
-                                                  <option key={track.id} value={track.id}>
-                                                    {track.title}{track.artist ? ` - ${track.artist}` : ""}
-                                                  </option>
-                                              ))}
-                                            </select>
-                                        )}
-                                      </>
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
+                                {danceNumber}
+                              </div>
+                            )}
+
+                            <div className="flex-1">
+                              {entry.kind === "dance" ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 text-sm font-medium">
+                                    {language === "ru" ? (dance?.name_ru || dance?.name) : (dance?.name_de || dance?.name)}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleTrackPicker(index, danceIndex, (entry as any).danceId)}
+                                    className="text-xs px-2 py-1 rounded border hover:bg-accent/20 disabled:opacity-50 min-w-[6.5rem]"
+                                    aria-expanded={isPickerOpen}
+                                    aria-controls={`track-picker-${index}-${danceIndex}`}
+                                    aria-busy={isLoadingTracks}
+                                    disabled={isLoadingTracks}
+                                  >
+                                    {isLoadingTracks ? (tStr("loading") || "Loading…") : t("selectTrack")}
+                                  </button>
+                                  <button
+                                    onClick={() => removeEntryFromSection(index, danceIndex)}
+                                    className="text-destructive hover:text-destructive/80"
+                                    aria-label="Remove dance"
+                                    title="Remove"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  {(entry as any).isEditing ? (
+                                    <>
+                                      <textarea
+                                        value={(entry as any).content || ""}
+                                        onChange={(e) => updateTextEntry(index, danceIndex, e.target.value)}
+                                        className="w-full min-h-[80px] text-sm border rounded px-2 py-1 bg-background"
+                                        placeholder={tStr("sectionIntro") || "Text before dances..."}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => saveTextEntry(index, danceIndex)}
+                                        className="text-xs px-2 py-1 rounded border hover:bg-accent/20"
+                                      >
+                                        <Save className="inline-block mr-1 h-3 w-3" />
+                                        {tStr("save") || "Save"}
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="text-sm whitespace-pre-wrap">{(entry as any).content}</div>
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const current = [...sections[index].dances]
+                                            const e = current[danceIndex]
+                                            if (e?.kind === "text") {
+                                              current[danceIndex] = { ...(e as any), isEditing: true }
+                                              updateSection(index, "dances", current)
+                                            }
+                                          }}
+                                          className="text-xs px-2 py-1 rounded border hover:bg-accent/20"
+                                        >
+                                          {tStr("edit") || "Edit"}
+                                        </button>
+                                        <button
+                                          onClick={() => removeEntryFromSection(index, danceIndex)}
+                                          className="text-destructive hover:text-destructive/80"
+                                          aria-label="Remove text"
+                                          title="Remove"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
-                            )}
+                              )}
+                            </div>
                           </div>
+
+                          {entry.kind === "dance" && (
+                            <div
+                              id={`track-picker-${index}-${danceIndex}`}
+                              ref={(el) => { pickerRefs.current[pickerKey] = el }}
+                              className={`mt-2 ml-10 overflow-hidden transition-[max-height,padding,opacity] duration-300 ease-in-out ${isPickerOpen ? "opacity-100 py-2" : "opacity-0 py-0"}`}
+                              style={{ maxHeight: isPickerOpen ? (pickerHeights[pickerKey] || 0) : 0 }}
+                            >
+                              {!isLoadingTracks && loadError && (
+                                <div className="text-xs text-destructive">{loadError}</div>
+                              )}
+                              {!isLoadingTracks && !loadError && (
+                                <>
+                                  {tracks.length === 0 ? (
+                                    <div className="text-xs text-muted-foreground italic">{tStr("noTracksAvailable")}</div>
+                                  ) : (
+                                    <select
+                                      value={(entry as any).musicId || ""}
+                                      onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
+                                      className="w-full text-sm border rounded px-2 py-1 bg-background"
+                                    >
+                                      <option value="">{t("chooseLater")}</option>
+                                      {tracks.map((track) => (
+                                        <option key={track.id} value={track.id}>{track.title}{track.artist ? ` - ${track.artist}` : ""}</option>
+                                      ))}
+                                    </select>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )
                     })}
 
-                    <div className="flex gap-2">
-                      <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => addTextToSection(index)}
-                          className="bg-transparent"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        {tStr("addText") || "Add text"}
-                      </Button>
+                    <div className="w-full">
+                      <div className="flex w-full items-center gap-2">
+                        <Button type="button" variant="outline" onClick={() => addTextToSection(index)} className="bg-transparent flex-1">
+                          <Plus className="mr-2 h-4 w-4" />{tStr("addText") || "Add text"}
+                        </Button>
+                        <span className="text-sm text-muted-foreground mx-2">{tStr("or") || "or"}</span>
+                        <Button type="button" variant="outline" onClick={() => { setDanceSelectorOpen(prev => ({ ...prev, [index]: true })); setActiveSection(index) }} className="bg-transparent flex-1">
+                          <Plus className="mr-2 h-4 w-4" />{tStr("addAnotherDance")}
+                        </Button>
+                      </div>
                     </div>
 
                     <DanceSelector
-                        sectionDances={section.dances as any}
-                        filteredDances={filteredDances}
-                        index={index}
-                        language={language}
-                        t={tStr}
-                        danceSearch={danceSearch}
-                        setDanceSearch={setDanceSearch}
-                        addDanceToSection={addDanceToSection}
+                      sectionDances={section.dances as any}
+                      filteredDances={filteredDances}
+                      index={index}
+                      language={language}
+                      t={tStr}
+                      danceSearch={danceSearch}
+                      setDanceSearch={setDanceSearch}
+                      addDanceToSection={addDanceToSection}
+                      open={!!danceSelectorOpen[index]}
+                      onOpenChange={(open) => setDanceSelectorOpen(prev => ({ ...prev, [index]: open }))}
                     />
                   </div>
                 </div>
-            ))}
+              )
+            })}
 
             <Button type="button" variant="outline" onClick={addSection} className="w-full bg-transparent">
               <Plus className="mr-2 h-4 w-4" />
