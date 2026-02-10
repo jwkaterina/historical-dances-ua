@@ -367,6 +367,10 @@ export const translations = {
     toastFailedUpdateDance: "Tanz konnte nicht aktualisiert werden",
     toastNameRequiredBothLanguages: "Bitte geben Sie den Tanznamen in beiden Sprachen ein",
     toastMusicTitleRequired: "Bitte geben Sie einen Titel für alle Musiktitel ein",
+    // New: toast when dance is used in balls
+    toastDanceUsedInBall: "Dieser Tanz wird in einem Ball verwendet:",
+    toastDanceUsedInBalls: "Dieser Tanz wird in Bällen verwendet:",
+    toastRemoveFromBallsFirst: "Entfernen Sie ihn zuerst dort.",
   },
   ru: {
     // Header
@@ -574,7 +578,11 @@ export const translations = {
     toastDanceUpdated: "Танец успешно обновлён",
     toastFailedUpdateDance: "Не удалось обновить танец",
     toastNameRequiredBothLanguages: "Пожалуйста, введите название танца на обоих языках",
-    toastMusicTitleRequired: "Пожалуйста, введите название для всех музыкальных треков",
+    toastMusicTitleRequired: "Пожалуйста, укажите название для всех музыкальных треков",
+    // New: toast when dance is used in balls
+    toastDanceUsedInBall: "Этот танец используется в бале:",
+    toastDanceUsedInBalls: "Этот танец используется в балах:",
+    toastRemoveFromBallsFirst: "Сначала удалите его оттуда.",
   },
 } as const
 

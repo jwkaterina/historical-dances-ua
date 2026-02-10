@@ -26,7 +26,7 @@ interface DeleteDanceButtonProps {
 
 export function DeleteDanceButton({ danceId, danceName }: DeleteDanceButtonProps) {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { isAdmin, loading: authLoading } = useAuth()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -34,18 +34,36 @@ export function DeleteDanceButton({ danceId, danceName }: DeleteDanceButtonProps
   const handleDelete = async () => {
     setLoading(true)
     try {
-      await deleteDance(danceId)
+      const result = await deleteDance(danceId) as any
+      if (result && result.success === false && result.code === 'DANCE_IN_BALLS') {
+        const ballNames = Array.isArray(result.balls)
+          ? result.balls
+              .map((b: any) => (language === 'ru' ? b.name_ru : language === 'de' ? (b.name_de ?? b.name) : b.name) || b.name)
+              .filter(Boolean)
+          : []
+        const isPlural = ballNames.length > 1
+        const prefix = t(isPlural ? 'toastDanceUsedInBalls' : 'toastDanceUsedInBall')
+        const suffix = t('toastRemoveFromBallsFirst')
+        const description = `${prefix} ${ballNames.join(', ')}. ${suffix}`
+        toast({
+          title: t('toastError'),
+          description,
+          variant: 'destructive',
+        })
+        return
+      }
+
       toast({
-        title: t("toastSuccess"),
-        description: t("toastDanceDeleted"),
+        title: t('toastSuccess'),
+        description: t('toastDanceDeleted'),
       })
-      router.push("/")
+      router.push('/')
     } catch (error) {
-      console.error("[v0] Error deleting dance:", error)
+      console.error('[v0] Error deleting dance:', error)
       toast({
-        title: t("toastError"),
-        description: error instanceof Error ? error.message : t("toastFailedDeleteDance"),
-        variant: "destructive",
+        title: t('toastError'),
+        description: error instanceof Error ? error.message : t('toastFailedDeleteDance'),
+        variant: 'destructive',
       })
     } finally {
       setLoading(false)
