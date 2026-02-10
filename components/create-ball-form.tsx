@@ -41,6 +41,7 @@ type SectionEntry =
   kind: "dance"
   danceId: string
   musicId?: string | null
+  musicTracks?: MusicTrack[] // optional cache of tracks for this dance
 }
     | {
   kind: "text"
@@ -81,6 +82,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                   danceId: sd.dances?.id || sd.dance_id,
                   musicId: sd.music_id || null,
                   order_index: sd.order_index ?? 0,
+                  musicTracks: dances.find(dance => dance.id === sd.dance_id)?.musicTracks ?? [],
                 }))
             const textEntries = (section.section_texts || [])
                 .sort((a: any, b: any) => a.order_index - b.order_index)
@@ -95,8 +97,8 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                 .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
                 .map(({ kind, ...rest }) => {
                   if (kind === "dance") {
-                    const { danceId, musicId } = rest as any
-                    return { kind, danceId, musicId } as SectionEntry
+                    const { danceId, musicId, musicTracks } = rest as any
+                    return { kind, danceId, musicId, musicTracks } as SectionEntry
                   }
                   const { content_ru, content_de, isEditing } = rest as any
                   return { kind, content_ru, content_de, isEditing } as SectionEntry
@@ -113,7 +115,6 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
     return [{ id: undefined, name: "", name_de: "", name_ru: "", dances: [] }]
   }, [ballToEdit])
 
-
   const [nameDE, setNameDE] = useState(ballToEdit?.name_de || "")
   const [nameRU, setNameRU] = useState(ballToEdit?.name_ru || "")
   const [date, setDate] = useState(ballToEdit?.date || "")
@@ -124,15 +125,6 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   const [loading, setLoading] = useState(false)
   const [activeSection, setActiveSection] = useState(0)
   const [dragOverTarget, setDragOverTarget] = useState<{ sectionIndex: number; danceIndex: number } | null>(null)
-
-  const [trackPickerOpen, setTrackPickerOpen] = useState<Record<string, boolean>>({})
-  const [tracksByDance, setTracksByDance] = useState<Record<string, MusicTrack[]>>({})
-  const [tracksLoading, setTracksLoading] = useState<Record<string, boolean>>({})
-  const [tracksError, setTracksError] = useState<Record<string, string | null>>({})
-  const pickerRefs = useRef<Record<string, HTMLDivElement | null>>({})
-  const [pickerHeights, setPickerHeights] = useState<Record<string, number>>({})
-  const [danceSelectorOpen, setDanceSelectorOpen] = useState<Record<number, boolean>>({})
-  // New: per-section toggle panel and pending text buffers
   const [panelOpen, setPanelOpen] = useState<Record<number, 'text' | 'dance' | null>>({})
   const [pendingText, setPendingText] = useState<Record<number, { ru: string; de: string } | null>>({})
 
@@ -144,47 +136,6 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   })
 
   const tStr: (key: string) => string = (key: string) => t(key as any)
-
-  function closeAllTrackPickers() {
-    setTrackPickerOpen({})
-  }
-
-  async function ensureTracksLoaded(danceId?: string) {
-    if (!danceId) return
-    if (tracksByDance[danceId] && !tracksLoading[danceId]) return
-    try {
-      setTracksLoading(prev => ({ ...prev, [danceId]: true }))
-      setTracksError(prev => ({ ...prev, [danceId]: null }))
-      const res = await fetch(`/api/music-tracks?danceId=${encodeURIComponent(danceId)}`, { cache: "no-store" })
-      if (!res.ok) throw new Error(`Failed to load tracks (${res.status})`)
-      const data: MusicTrack[] = await res.json()
-      setTracksByDance(prev => ({ ...prev, [danceId]: data }))
-    } catch (err) {
-      setTracksError(prev => ({ ...prev, [danceId]: (err as Error).message }))
-      setTracksByDance(prev => ({ ...prev, [danceId]: [] }))
-    } finally {
-      setTracksLoading(prev => ({ ...prev, [danceId]: false }))
-    }
-  }
-
-  async function toggleTrackPicker(sectionIndex: number, danceIndex: number, danceId?: string) {
-    if (!danceId) {
-      toast({ title: t("error"), description: t("noTracksAvailable") })
-      return
-    }
-    const key = `${sectionIndex}:${danceIndex}`
-    setTrackPickerOpen(prev => ({ ...prev, [key]: !prev[key] }))
-    await ensureTracksLoaded(danceId)
-    requestAnimationFrame(() => {
-      const el = pickerRefs.current[key]
-      if (!el) return
-      const prevMax = el.style.maxHeight
-      el.style.maxHeight = "none"
-      const measured = el.scrollHeight
-      el.style.maxHeight = prevMax
-      setPickerHeights(prev => ({ ...prev, [key]: measured }))
-    })
-  }
 
   const addSection = () => {
     setSections([...sections, { id: undefined, name: "", name_de: "", name_ru: "", dances: [] }])
@@ -261,7 +212,6 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   }
 
   const handleDragStart = (sectionIndex: number, danceIndex: number) => (e: React.DragEvent) => {
-    closeAllTrackPickers()
     e.dataTransfer.setData("application/json", JSON.stringify({ fromSection: sectionIndex, fromIndex: danceIndex }))
     e.dataTransfer.effectAllowed = "move"
   }
@@ -298,9 +248,6 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
     setSections(initialSections)
     setDanceSearch("")
     setActiveSection(0)
-    // close any open dance selector panels so they are not visible next time the dialog opens
-    setDanceSelectorOpen({})
-    closeAllTrackPickers()
     setPanelOpen({})
     setPendingText({})
   }
@@ -468,12 +415,8 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
 
                   <div className="space-y-3">
                     {section.dances.map((entry, danceIndex) => {
-                      const pickerKey = `${index}:${danceIndex}`
-                      const isPickerOpen = !!trackPickerOpen[pickerKey]
                       const dance = entry.kind === "dance" ? dances.find(d => d.id === entry.danceId) : null
-                      const tracks = entry.kind === "dance" ? (tracksByDance[(entry as any).danceId] || []) : []
-                      const isLoadingTracks = entry.kind === "dance" ? !!tracksLoading[(entry as any).danceId] : false
-                      const loadError = entry.kind === "dance" ? tracksError[(entry as any).danceId] : null
+                      const tracks = entry.kind === "dance" ? (entry.musicTracks || []) : []
                       const danceNumber = entry.kind === "dance" ? section.dances.slice(0, danceIndex).filter(d => d.kind === "dance").length + 1 : null
 
                       return (
@@ -505,44 +448,49 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
 
                             <div className="flex-1">
                               {entry.kind === "dance" ? (
-                                <div className="flex items-center gap-2">
-                                  <div className="flex-1 text-sm font-medium">
-                                    {language === "ru" ? (dance?.name_ru || dance?.name) : (dance?.name_de || dance?.name)}
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex-1">
+                                      <div className="text-sm font-semibold text-[#6b3e26]">
+                                        {language === "ru" ? (dance?.name_ru || dance?.name) : (dance?.name_de || dance?.name)}
+                                      </div>
+                                      <div className="mt-4">
+                                        <select
+                                          value={(entry as any).musicId || ""}
+                                          onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
+                                          className="text-xs border rounded px-2 py-1 bg-background"
+                                        >
+                                          <option value="">{t("chooseLater")}</option>
+                                          {tracks.map((track) => (
+                                            <option key={track.id} value={track.id}>
+                                              {track.title}{track.artist ? ` - ${track.artist}` : ""}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => removeEntryFromSection(index, danceIndex)}
+                                      className="text-destructive hover:text-destructive/80"
+                                      aria-label="Remove dance"
+                                      title="Remove"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleTrackPicker(index, danceIndex, (entry as any).danceId)}
-                                    className="text-xs px-2 py-1 rounded border hover:bg-accent/20 disabled:opacity-50 min-w-[6.5rem]"
-                                    aria-expanded={isPickerOpen}
-                                    aria-controls={`track-picker-${index}-${danceIndex}`}
-                                    aria-busy={isLoadingTracks}
-                                    disabled={isLoadingTracks}
-                                  >
-                                    {isLoadingTracks ? (tStr("loading") || "Loading…") : t("selectTrack")}
-                                  </button>
-                                  <button
-                                    onClick={() => removeEntryFromSection(index, danceIndex)}
-                                    className="text-destructive hover:text-destructive/80"
-                                    aria-label="Remove dance"
-                                    title="Remove"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                </div>
                               ) : (
-                                <div className="space-y-2">
+                                  <div className="space-y-2">
                                   {(entry as any).isEditing ? (
-                                      <>
-                                        <div className="space-y-2">
-                                          <Label htmlFor="section-text-ru">Русский</Label>
-                                          <Input
-                                            id="section-text-ru"
-                                            value={(entry as any).content_ru || ""}
-                                            onChange={(e) => updateTextEntry(index, danceIndex, { content_ru: e.target.value })}
-                                            placeholder={"Напр. 'Подарочный танец от Берлина'"}
+                                        <>
+                                          <div className="space-y-2 pl-10">
+                                            <Label htmlFor="section-text-ru">Русский</Label>
+                                            <Input
+                                                id="section-text-ru"
+                                                value={(entry as any).content_ru || ""}
+                                                onChange={(e) => updateTextEntry(index, danceIndex, {content_ru: e.target.value})}
+                                                placeholder={"Напр. 'Подарочный танец от Берлина'"}
                                           />
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 pl-10">
                                           <Label htmlFor="section-text-de">Deutsch</Label>
                                           <Input
                                             id="section-text-de"
@@ -551,35 +499,41 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                                             placeholder={"Z.b. 'Ein Geschenktanz aus Berlin'"}
                                           />
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => saveTextEntry(index, danceIndex)}
-                                            className="text-xs px-2 py-1 rounded border hover:bg-accent/20"
-                                        >
-                                          <Save className="inline-block mr-1 h-3 w-3"/>
-                                          {tStr("save") || "Save"}
-                                        </button>
-                                      </>
-                                  ) : (
-                                      <div className="flex items-start justify-between gap-2">
-                                        <div className="text-sm whitespace-pre-wrap">
-                                          {language === "ru" ? ((entry as any).content_ru || "") : ((entry as any).content_de || "")}
-                                        </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="pl-10">
                                           <button
                                               type="button"
-                                              onClick={() => {
-                                                const current = [...sections[index].dances]
-                                                const e = current[danceIndex]
-                                                if (e?.kind === "text") {
-                                                  current[danceIndex] = { ...(e as any), isEditing: true }
-                                                  updateSection(index, "dances", current)
-                                                }
-                                              }}
+                                              onClick={() => saveTextEntry(index, danceIndex)}
                                               className="text-xs px-2 py-1 rounded border hover:bg-accent/20"
                                           >
-                                            {language === "ru" ? "Редактировать" : "Bearbeiten"}
+                                            <Save className="inline-block mr-1 h-3 w-3"/>
+                                            {tStr("save") || "Save"}
                                           </button>
+                                        </div>
+                                      </>
+                                  ) : (
+                                      <div className="pl-10">
+                                        <div className="flex items-center gap-2">
+                                          <div className="flex-1">
+                                            <div className="text-sm whitespace-pre-wrap font-semibold text-[#6b3e26]">
+                                              {language === "ru" ? ((entry as any).content_ru || "") : ((entry as any).content_de || "")}
+                                            </div>
+                                            <div className="mt-4">
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  const current = [...sections[index].dances]
+                                                  const e = current[danceIndex]
+                                                  if (e?.kind === "text") {
+                                                    current[danceIndex] = { ...(e as any), isEditing: true }
+                                                    updateSection(index, "dances", current)
+                                                  }
+                                                }}
+                                                className="text-xs border rounded px-2 py-1 bg-background hover:bg-accent/20"
+                                              >
+                                                {language === "ru" ? "Редактировать" : "Bearbeiten"}
+                                              </button>
+                                            </div>
+                                          </div>
                                           <button
                                             onClick={() => removeEntryFromSection(index, danceIndex)}
                                             className="text-destructive hover:text-destructive/80"
@@ -590,42 +544,11 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                                           </button>
                                         </div>
                                       </div>
-                                  )}
-                                </div>
+                                    )}
+                                  </div>
                               )}
                             </div>
                           </div>
-
-                          {entry.kind === "dance" && (
-                            <div
-                              id={`track-picker-${index}-${danceIndex}`}
-                              ref={(el) => { pickerRefs.current[pickerKey] = el }}
-                              className={`mt-2 ml-10 overflow-hidden transition-[max-height,padding,opacity] duration-300 ease-in-out ${isPickerOpen ? "opacity-100 py-2" : "opacity-0 py-0"}`}
-                              style={{ maxHeight: isPickerOpen ? (pickerHeights[pickerKey] || 0) : 0 }}
-                            >
-                              {!isLoadingTracks && loadError && (
-                                <div className="text-xs text-destructive">{loadError}</div>
-                              )}
-                              {!isLoadingTracks && !loadError && (
-                                <>
-                                  {tracks.length === 0 ? (
-                                    <div className="text-xs text-muted-foreground italic">{tStr("noTracksAvailable")}</div>
-                                  ) : (
-                                    <select
-                                      value={(entry as any).musicId || ""}
-                                      onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
-                                      className="w-full text-sm border rounded px-2 py-1 bg-background"
-                                    >
-                                      <option value="">{t("chooseLater")}</option>
-                                      {tracks.map((track) => (
-                                        <option key={track.id} value={track.id}>{track.title}{track.artist ? ` - ${track.artist}` : ""}</option>
-                                      ))}
-                                    </select>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          )}
                         </div>
                       )
                     })}
