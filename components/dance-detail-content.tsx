@@ -110,9 +110,13 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }:
               </Badge>
             )}
           </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <EditDanceForm dance={dance} musicTracks={musicForEdit} />
-            <DeleteDanceButton danceId={dance.id} danceName={displayName} />
+          <div className="flex w-full gap-2 sm:justify-end">
+            <div className="flex-1 sm:flex-none">
+              <EditDanceForm dance={dance} musicTracks={musicForEdit} />
+            </div>
+            <div className="flex-1 sm:flex-none">
+              <DeleteDanceButton danceId={dance.id} danceName={displayName} />
+            </div>
           </div>
         </div>
         {dance.origin && (

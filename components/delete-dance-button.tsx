@@ -78,7 +78,7 @@ export function DeleteDanceButton({ danceId, danceName }: DeleteDanceButtonProps
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
+        <Button variant="destructive" size="sm" className="w-full sm:w-auto">
           <Trash2 className="mr-2 h-4 w-4" />
           {t("deleteDance")}
         </Button>

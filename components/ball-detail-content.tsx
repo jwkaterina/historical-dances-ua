@@ -171,33 +171,37 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
             </div>
           </div>
           {isAdmin && (
-              <div className="flex gap-2">
-                <CreateBallForm dances={allDances} ballToEdit={ball} />
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      {t("deleteBall")}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t("deleteConfirmBall")}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t("deleteConfirmMessageBall")} "{displayName}"
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="flex gap-3">
-                      <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                      <AlertDialogAction
-                          onClick={handleDelete}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        {t("delete")}
-                      </AlertDialogAction>
-                    </div>
-                  </AlertDialogContent>
-                </AlertDialog>
+              <div className="flex w-full gap-2 sm:justify-end">
+                <div className="flex-1 sm:flex-none">
+                  <CreateBallForm dances={allDances} ballToEdit={ball} triggerClassName="w-full sm:w-auto" />
+                </div>
+                <div className="flex-1 sm:flex-none">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="w-full sm:w-auto">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        {t("deleteBall")}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t("deleteConfirmBall")}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("deleteConfirmMessageBall")} "{displayName}"
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="flex gap-3">
+                        <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {t("delete")}
+                        </AlertDialogAction>
+                      </div>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
           )}
         </div>

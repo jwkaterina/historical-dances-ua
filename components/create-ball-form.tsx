@@ -67,9 +67,10 @@ interface Section {
 interface CreateBallFormProps {
   dances: Dance[]
   ballToEdit?: any
+  triggerClassName?: string
 }
 
-export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
+export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateBallFormProps) {
   const { t, language } = useLanguage()
   const router = useRouter()
   const { isAdmin } = useAuth()
@@ -379,7 +380,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
           }}
       >
         <DialogTrigger asChild>
-          <Button>
+          <Button className={triggerClassName}>
             <Edit className="mr-2 h-4 w-4" />
             {ballToEdit ? t("editBall") : (<><Plus className="mr-2 h-4 w-4" />{t("createBall")}</>)}
           </Button>
