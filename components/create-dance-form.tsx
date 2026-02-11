@@ -21,12 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+// removed unused Tabs import
 import { useLanguage } from "@/components/language-provider"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { Plus, Trash2, Upload, X } from "lucide-react"
-import Link from "next/link"
+// removed unused Link import
 
 interface MusicEntry {
   title: string
@@ -41,7 +41,7 @@ export function CreateDanceForm() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { t, language } = useLanguage()
-  const { isAdmin, isAuthenticated, loading: authLoading } = useAuth()
+  const { isAdmin, loading: authLoading } = useAuth()
   const { toast } = useToast()
   
   // German fields
@@ -341,79 +341,41 @@ export function CreateDanceForm() {
           {t("createDance")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl pb-20 sm:pb-6">
+      <DialogContent className="max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
         <DialogHeader>
           <DialogTitle>{t("addNewDance")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
+            {/* Name and text fields */}
             <div className="space-y-2">
               <Label htmlFor="nameRu">{t("danceName")} (Русский) *</Label>
-              <Input
-                id="nameRu"
-                value={nameRu}
-                onChange={(e) => setNameRu(e.target.value)}
-                placeholder={t("danceNamePlaceholder")}
-              />
+              <Input id="nameRu" value={nameRu} onChange={(e) => setNameRu(e.target.value)} placeholder={t("danceNamePlaceholder")} />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="nameDe">{t("danceName")} (Deutsch) *</Label>
-              <Input
-                id="nameDe"
-                value={nameDe}
-                onChange={(e) => setNameDe(e.target.value)}
-                placeholder={t("danceNamePlaceholder")}
-              />
+              <Input id="nameDe" value={nameDe} onChange={(e) => setNameDe(e.target.value)} placeholder={t("danceNamePlaceholder")} />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="descriptionRu">{t("descriptionLabel")} (Русский)</Label>
-              <Textarea
-                id="descriptionRu"
-                value={descriptionRu}
-                onChange={(e) => setDescriptionRu(e.target.value)}
-                placeholder={t("descriptionPlaceholder")}
-                rows={2}
-              />
+              <Textarea id="descriptionRu" value={descriptionRu} onChange={(e) => setDescriptionRu(e.target.value)} placeholder={t("descriptionPlaceholder")} rows={2} />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="descriptionDe">{t("descriptionLabel")} (Deutsch)</Label>
-              <Textarea
-                id="descriptionDe"
-                value={descriptionDe}
-                onChange={(e) => setDescriptionDe(e.target.value)}
-                placeholder={t("descriptionPlaceholder")}
-                rows={2}
-              />
+              <Textarea id="descriptionDe" value={descriptionDe} onChange={(e) => setDescriptionDe(e.target.value)} placeholder={t("descriptionPlaceholder")} rows={2} />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="schemeRu">{t("schemeLabel")} (Русский)</Label>
-              <Textarea
-                id="schemeRu"
-                value={schemeRu}
-                onChange={(e) => setSchemeRu(e.target.value)}
-                placeholder={t("schemePlaceholder")}
-                rows={4}
-              />
+              <Textarea id="schemeRu" value={schemeRu} onChange={(e) => setSchemeRu(e.target.value)} placeholder={t("schemePlaceholder")} rows={4} />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="schemeDe">{t("schemeLabel")} (Deutsch)</Label>
-              <Textarea
-                id="schemeDe"
-                value={schemeDe}
-                onChange={(e) => setSchemeDe(e.target.value)}
-                placeholder={t("schemePlaceholder")}
-                rows={4}
-              />
+              <Textarea id="schemeDe" value={schemeDe} onChange={(e) => setSchemeDe(e.target.value)} placeholder={t("schemePlaceholder")} rows={4} />
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="difficulty">{t("difficulty")}</Label>
                 <Select value={difficulty} onValueChange={setDifficulty}>
@@ -431,49 +393,22 @@ export function CreateDanceForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="youtubeUrl">{t("youtubeUrl")}</Label>
-                <Input
-                  id="youtubeUrl"
-                  type="url"
-                  value={youtubeUrl}
-                  onChange={(e) => setYoutubeUrl(e.target.value)}
-                  placeholder={t("youtubePlaceholder")}
-                />
+                <Input id="youtubeUrl" type="url" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder={t("youtubePlaceholder")} />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label>{t("videoFile")}</Label>
                 {videoFile ? (
                   <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
-                    <span className="text-sm text-foreground truncate flex-1">
-                      {videoFile.name}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setVideoFile(null)}
-                    >
+                    <span className="text-sm text-foreground truncate flex-1">{videoFile.name}</span>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setVideoFile(null)}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Input
-                      id="videoFile"
-                      type="file"
-                      accept="video/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) setVideoFile(file)
-                      }}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => document.getElementById("videoFile")?.click()}
-                      className="w-full"
-                    >
+                    <Input id="videoFile" type="file" accept="video/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) setVideoFile(file) }} className="hidden" />
+                    <Button type="button" variant="outline" onClick={() => document.getElementById("videoFile")?.click()} className="w-full">
                       <Upload className="mr-2 h-4 w-4" />
                       {t("selectVideo")}
                     </Button>
@@ -486,16 +421,11 @@ export function CreateDanceForm() {
               <h3 className="font-medium text-foreground">{t("musicTracks")}</h3>
 
               {musicEntries.map((music, index) => (
-                <div key={index} className="space-y-3 rounded-lg border border-border p-4">
+                <div key={index} className="space-y-3 rounded-lg border border-border p-3 sm:p-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Track {index + 1}</span>
                     {musicEntries.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeMusicEntry(index)}
-                      >
+                      <Button type="button" variant="ghost" size="sm" onClick={() => removeMusicEntry(index)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     )}
@@ -505,12 +435,7 @@ export function CreateDanceForm() {
                   {showTitleFields && (
                     <div className="space-y-2">
                       <Label>{t("title")} *</Label>
-                      <Input
-                        value={music.title}
-                        onChange={(e) => updateMusicEntry(index, "title", e.target.value)}
-                        placeholder={t("titlePlaceholder")}
-                        required={!!musicAudioFiles[index] || !!music.audio_url}
-                      />
+                      <Input value={music.title} onChange={(e) => updateMusicEntry(index, "title", e.target.value)} placeholder={t("titlePlaceholder")} required={!!musicAudioFiles[index] || !!music.audio_url} />
                     </div>
                   )}
 
@@ -518,52 +443,15 @@ export function CreateDanceForm() {
                     <Label>{t("audio")}</Label>
                     {musicAudioFiles[index] ? (
                       <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
-                        <span className="text-sm text-foreground truncate flex-1">
-                          {musicAudioFiles[index]?.name}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const newFiles = { ...musicAudioFiles }
-                            delete newFiles[index]
-                            setMusicAudioFiles(newFiles)
-                          }}
-                        >
+                        <span className="text-sm text-foreground truncate flex-1">{musicAudioFiles[index]?.name}</span>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => { const newFiles = { ...musicAudioFiles }; delete newFiles[index]; setMusicAudioFiles(newFiles) }}>
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <Input
-                          id={`create-music-audio-${index}`}
-                          type="file"
-                          accept="audio/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              const MAX_SIZE = 20 * 1024 * 1024
-                              if (file.size > MAX_SIZE) {
-                                toast({
-                                  title: t("toastError"),
-                                  description: t("toastAudioTooLarge"),
-                                  variant: "destructive",
-                                })
-                                e.target.value = ""
-                                return
-                              }
-                              setMusicAudioFiles({ ...musicAudioFiles, [index]: file })
-                            }
-                          }}
-                          className="hidden"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById(`create-music-audio-${index}`)?.click()}
-                          className="w-full"
-                        >
+                        <Input id={`create-music-audio-${index}`} type="file" accept="audio/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const MAX_SIZE = 20 * 1024 * 1024; if (file.size > MAX_SIZE) { toast({ title: t("toastError"), description: t("toastAudioTooLarge"), variant: "destructive", }); e.target.value = ""; return } setMusicAudioFiles({ ...musicAudioFiles, [index]: file }) } }} className="hidden" />
+                        <Button type="button" variant="outline" onClick={() => document.getElementById(`create-music-audio-${index}`)?.click()} className="w-full">
                           <Upload className="mr-2 h-4 w-4" />
                           {t("selectAudio")}
                         </Button>
@@ -579,7 +467,7 @@ export function CreateDanceForm() {
               </Button>
             </div>
 
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 {t("cancel")}
               </Button>

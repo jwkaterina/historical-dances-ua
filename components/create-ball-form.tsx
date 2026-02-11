@@ -1,7 +1,7 @@
 // File: 'components/create-ball-form.tsx'
 "use client"
 
-import React, { useState, useMemo, useRef } from "react"
+import React, { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +19,12 @@ import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { createBall, updateBall } from "@/app/actions/ball"
 import { useLanguage } from "@/hooks/use-language"
+
+// dnd-kit imports
+import { DndContext, DragEndEvent } from "@dnd-kit/core"
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import { useSortable } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 interface MusicTrack {
   id: string
@@ -61,9 +67,10 @@ interface Section {
 interface CreateBallFormProps {
   dances: Dance[]
   ballToEdit?: any
+  triggerClassName?: string
 }
 
-export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
+export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateBallFormProps) {
   const { t, language } = useLanguage()
   const router = useRouter()
   const { isAdmin } = useAuth()
@@ -124,7 +131,6 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   const [danceSearch, setDanceSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [activeSection, setActiveSection] = useState(0)
-  const [dragOverTarget, setDragOverTarget] = useState<{ sectionIndex: number; danceIndex: number } | null>(null)
   const [panelOpen, setPanelOpen] = useState<Record<number, 'text' | 'dance' | null>>({})
   const [pendingText, setPendingText] = useState<Record<number, { ru: string; de: string } | null>>({})
 
@@ -172,11 +178,6 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
     setDanceSearch("")
   }
 
-  const addTextToSection = (sectionIndex: number) => {
-    const current = sections[sectionIndex].dances
-    updateSection(sectionIndex, "dances", [...current, { kind: "text", content_ru: "", content_de: "", isEditing: true }])
-  }
-
   // Accept partial updates for localized text fields
   const updateTextEntry = (
     sectionIndex: number,
@@ -211,33 +212,49 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
     updateSection(sectionIndex, "dances", current.filter((_, i) => i !== danceIndex))
   }
 
-  const handleDragStart = (sectionIndex: number, danceIndex: number) => (e: React.DragEvent) => {
-    e.dataTransfer.setData("application/json", JSON.stringify({ fromSection: sectionIndex, fromIndex: danceIndex }))
-    e.dataTransfer.effectAllowed = "move"
-  }
+  // dnd-kit drag end handler: supports intra-section and cross-section reordering
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over) return
 
-  const handleDragOver = (sectionIndex: number, danceIndex: number) => (e: React.DragEvent) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = "move"
-    setDragOverTarget({ sectionIndex, danceIndex })
-  }
+    const fromSection = active.data?.current?.sectionIndex as number | undefined
+    const fromIndex = active.data?.current?.danceIndex as number | undefined
+    const toSection = over.data?.current?.sectionIndex as number | undefined
+    const toIndex = over.data?.current?.danceIndex as number | undefined
 
-  const handleDropOnDance = (sectionIndex: number, danceIndex: number) => (e: React.DragEvent) => {
-    e.preventDefault()
-    const payload = e.dataTransfer.getData("application/json")
-    if (!payload) return
-    const { fromSection, fromIndex } = JSON.parse(payload) as { fromSection: number; fromIndex: number }
+    if (
+      fromSection === undefined ||
+      fromIndex === undefined ||
+      toSection === undefined ||
+      toIndex === undefined
+    ) {
+      return
+    }
 
     setSections(prev => {
       const next = prev.map(s => ({ ...s, dances: [...s.dances] }))
       const [moved] = next[fromSection].dances.splice(fromIndex, 1)
-      next[sectionIndex].dances.splice(danceIndex, 0, moved)
+      next[toSection].dances.splice(toIndex, 0, moved)
       return next
     })
-    setDragOverTarget(null)
   }
 
-  const handleDragLeave = () => setDragOverTarget(null)
+  // Sortable item component for entries using render-prop to avoid leaking props
+  const SortableEntry: React.FC<{ sectionIndex: number; danceIndex: number; children: (args: { attributes: any; listeners: any; setNodeRef: (node: HTMLElement | null) => void; style: React.CSSProperties }) => React.ReactNode }> = ({ sectionIndex, danceIndex, children }) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+      id: `section-${sectionIndex}-entry-${danceIndex}`,
+      data: { sectionIndex, danceIndex },
+    })
+
+    const style: React.CSSProperties = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    }
+
+    return (
+      <>{children({ attributes, listeners, setNodeRef, style })}</>
+    )
+  }
 
   const resetForm = () => {
     setNameDE(ballToEdit?.name_de || "")
@@ -354,6 +371,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
   }
 
   return (
+      <DndContext onDragEnd={onDragEnd}>
       <Dialog
           open={open}
           onOpenChange={(newOpen) => {
@@ -362,12 +380,12 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
           }}
       >
         <DialogTrigger asChild>
-          <Button>
+          <Button className={triggerClassName}>
             <Edit className="mr-2 h-4 w-4" />
             {ballToEdit ? t("editBall") : (<><Plus className="mr-2 h-4 w-4" />{t("createBall")}</>)}
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl pb-20 sm:pb-6">
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
           <DialogHeader>
             <DialogTitle>{ballToEdit ? t("editBall") : t("createBall")}</DialogTitle>
           </DialogHeader>
@@ -388,7 +406,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
             <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="city-ru">{language === "ru" ? "Город" : "Stadt"} \(Русский\)</Label>
               <Input id="city-ru" value={selectedCityRU} onChange={(e) => setSelectedCityRU(e.target.value)} placeholder="напр. Москва" />
@@ -403,7 +421,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
             <Label>{t("sections")}</Label>
             {sections.map((section, index) => {
               return (
-                <div key={index} className="border rounded-lg p-4 space-y-3">
+                <div key={index} className="border rounded-lg p-3 sm:p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">{t("section")} {index + 1}</h3>
                     {sections.length > 1 && (
@@ -414,159 +432,166 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                   </div>
 
                   <div className="space-y-3">
+                    {/* Sortable context per section using current entry keys */}
+                    <SortableContext
+                      items={section.dances.map((_, danceIndex) => `section-${index}-entry-${danceIndex}`)}
+                      strategy={verticalListSortingStrategy}
+                    >
                     {section.dances.map((entry, danceIndex) => {
                       const dance = entry.kind === "dance" ? dances.find(d => d.id === entry.danceId) : null
                       const tracks = entry.kind === "dance" ? (entry.musicTracks || []) : []
                       const danceNumber = entry.kind === "dance" ? section.dances.slice(0, danceIndex).filter(d => d.kind === "dance").length + 1 : null
 
                       return (
-                        <div
-                          key={danceIndex}
-                          className={`border rounded-md p-3 bg-muted/30 ${dragOverTarget && dragOverTarget.sectionIndex === index && dragOverTarget.danceIndex === danceIndex ? "ring-2 ring-primary/40" : ""}`}
-                          onDragOver={handleDragOver(index, danceIndex)}
-                          onDrop={handleDropOnDance(index, danceIndex)}
-                          onDragLeave={handleDragLeave}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="flex-shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
-                              role="button"
-                              aria-label="Drag entry"
-                              draggable
-                              onDragStart={handleDragStart(index, danceIndex)}
-                              onDragEnd={handleDragLeave}
-                              title="Drag"
+                        <SortableEntry key={`section-${index}-entry-${danceIndex}`} sectionIndex={index} danceIndex={danceIndex}>
+                          {({ attributes, listeners, setNodeRef, style }) => (
+                            <div
+                              ref={setNodeRef}
+                              style={style}
+                              {...attributes}
+                              className={`border rounded-md p-2 sm:p-3 bg-muted/30`}
                             >
-                              <GripVertical className="h-4 w-4" />
-                            </span>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="flex-shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+                                  role="button"
+                                  aria-label="Drag entry"
+                                  {...listeners}
+                                  title="Drag"
+                                >
+                                  <GripVertical className="h-4 w-4" />
+                                </span>
 
-                            {entry.kind === "dance" && (
-                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                                {danceNumber}
-                              </div>
-                            )}
-
-                            <div className="flex-1">
-                              {entry.kind === "dance" ? (
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex-1">
-                                      <div className="text-sm font-semibold text-[#6b3e26]">
-                                        {language === "ru" ? (dance?.name_ru || dance?.name) : (dance?.name_de || dance?.name)}
-                                      </div>
-                                      <div className="mt-4">
-                                        <select
-                                          value={(entry as any).musicId || ""}
-                                          onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
-                                          className="text-xs border rounded px-2 py-1 bg-background"
-                                        >
-                                          <option value="">{t("chooseLater")}</option>
-                                          {tracks.map((track) => (
-                                            <option key={track.id} value={track.id}>
-                                              {track.title}{track.artist ? ` - ${track.artist}` : ""}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </div>
-                                    </div>
-                                    <button
-                                      onClick={() => removeEntryFromSection(index, danceIndex)}
-                                      className="text-destructive hover:text-destructive/80"
-                                      aria-label="Remove dance"
-                                      title="Remove"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
+                                {entry.kind === "dance" && (
+                                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
+                                    {danceNumber}
                                   </div>
-                              ) : (
-                                  <div className="space-y-2">
-                                  {(entry as any).isEditing ? (
+                                )}
+
+                                <div className="flex-1 min-w-0">
+                                  {entry.kind === "dance" ? (
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex-1">
+                                        <div className="text-sm font-semibold text-[#6b3e26]">
+                                          {language === "ru" ? (dance?.name_ru || dance?.name) : (dance?.name_de || dance?.name)}
+                                        </div>
+                                        <div className="mt-4">
+                                          <select
+                                            value={(entry as any).musicId || ""}
+                                            onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
+                                            className="text-xs border rounded px-2 py-1 bg-background"
+                                          >
+                                            <option value="">{t("chooseLater")}</option>
+                                            {tracks.map((track) => (
+                                              <option key={track.id} value={track.id}>
+                                                {track.title}{track.artist ? ` - ${track.artist}` : ""}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                      </div>
+                                      <button
+                                        onClick={() => removeEntryFromSection(index, danceIndex)}
+                                        className="text-destructive hover:text-destructive/80"
+                                        aria-label="Remove dance"
+                                        title="Remove"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {(entry as any).isEditing ? (
                                         <>
                                           <div className="space-y-2 pl-10">
                                             <Label htmlFor="section-text-ru">Русский</Label>
                                             <Input
-                                                id="section-text-ru"
-                                                value={(entry as any).content_ru || ""}
-                                                onChange={(e) => updateTextEntry(index, danceIndex, {content_ru: e.target.value})}
-                                                placeholder={"Напр. 'Подарочный танец от Берлина'"}
-                                          />
-                                        </div>
-                                        <div className="space-y-2 pl-10">
-                                          <Label htmlFor="section-text-de">Deutsch</Label>
-                                          <Input
-                                            id="section-text-de"
-                                            value={(entry as any).content_de || ""}
-                                            onChange={(e) => updateTextEntry(index, danceIndex, { content_de: e.target.value })}
-                                            placeholder={"Z.b. 'Ein Geschenktanz aus Berlin'"}
-                                          />
-                                        </div>
-                                        <div className="pl-10">
-                                          <button
+                                              id="section-text-ru"
+                                              value={(entry as any).content_ru || ""}
+                                              onChange={(e) => updateTextEntry(index, danceIndex, { content_ru: e.target.value })}
+                                              placeholder={"Напр. 'Подарочный танец от Берлина'"}
+                                            />
+                                          </div>
+                                          <div className="space-y-2 pl-10">
+                                            <Label htmlFor="section-text-de">Deutsch</Label>
+                                            <Input
+                                              id="section-text-de"
+                                              value={(entry as any).content_de || ""}
+                                              onChange={(e) => updateTextEntry(index, danceIndex, { content_de: e.target.value })}
+                                              placeholder={"Z.b. 'Ein Geschenktanz aus Berlin'"}
+                                            />
+                                          </div>
+                                          <div className="pl-10">
+                                            <button
                                               type="button"
                                               onClick={() => saveTextEntry(index, danceIndex)}
                                               className="text-xs px-2 py-1 rounded border hover:bg-accent/20"
-                                          >
-                                            <Save className="inline-block mr-1 h-3 w-3"/>
-                                            {tStr("save") || "Save"}
-                                          </button>
-                                        </div>
-                                      </>
-                                  ) : (
-                                      <div className="pl-10">
-                                        <div className="flex items-center gap-2">
-                                          <div className="flex-1">
-                                            <div className="text-sm whitespace-pre-wrap font-semibold text-[#6b3e26]">
-                                              {language === "ru" ? ((entry as any).content_ru || "") : ((entry as any).content_de || "")}
-                                            </div>
-                                            <div className="mt-4">
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  const current = [...sections[index].dances]
-                                                  const e = current[danceIndex]
-                                                  if (e?.kind === "text") {
-                                                    current[danceIndex] = { ...(e as any), isEditing: true }
-                                                    updateSection(index, "dances", current)
-                                                  }
-                                                }}
-                                                className="text-xs border rounded px-2 py-1 bg-background hover:bg-accent/20"
-                                              >
-                                                {language === "ru" ? "Редактировать" : "Bearbeiten"}
-                                              </button>
-                                            </div>
+                                            >
+                                              <Save className="inline-block mr-1 h-3 w-3" />
+                                              {tStr("save") || "Save"}
+                                            </button>
                                           </div>
-                                          <button
-                                            onClick={() => removeEntryFromSection(index, danceIndex)}
-                                            className="text-destructive hover:text-destructive/80"
-                                            aria-label="Remove text"
-                                            title="Remove"
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </button>
+                                        </>
+                                      ) : (
+                                        <div className="pl-10">
+                                          <div className="flex items-center gap-2">
+                                            <div className="flex-1">
+                                              <div className="text-sm whitespace-pre-wrap font-semibold text-[#6b3e26]">
+                                                {language === "ru" ? ((entry as any).content_ru || "") : ((entry as any).content_de || "")}
+                                              </div>
+                                              <div className="mt-4">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    const current = [...sections[index].dances]
+                                                    const e = current[danceIndex]
+                                                    if (e?.kind === "text") {
+                                                      current[danceIndex] = { ...(e as any), isEditing: true }
+                                                      updateSection(index, "dances", current)
+                                                    }
+                                                  }}
+                                                  className="text-xs border rounded px-2 py-1 bg-background hover:bg-accent/20"
+                                                >
+                                                  {language === "ru" ? "Редактировать" : "Bearbeiten"}
+                                                </button>
+                                              </div>
+                                            </div>
+                                            <button
+                                              onClick={() => removeEntryFromSection(index, danceIndex)}
+                                              className="text-destructive hover:text-destructive/80"
+                                              aria-label="Remove text"
+                                              title="Remove"
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </button>
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
-                                  </div>
-                              )}
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
+                          )}
+                        </SortableEntry>
                       )
                     })}
+                    </SortableContext>
 
                     <div className="w-full">
-                      <div className="flex w-full items-center gap-2">
-                        <Button type="button" variant="outline" onClick={() => { openTextPanel(index); }} className="bg-transparent flex-1">
+                      <div className="flex w-full flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <Button type="button" variant="outline" onClick={() => { openTextPanel(index); }} className="bg-transparent w-full sm:flex-1">
                           <Plus className="mr-2 h-4 w-4" />{tStr("addText") || "Add text"}
                         </Button>
-                        <span className="text-sm text-muted-foreground mx-2">{tStr("or") || "or"}</span>
-                        <Button type="button" variant="outline" onClick={() => { openDancePanel(index); }} className="bg-transparent flex-1">
+                        <span className="hidden sm:inline text-sm text-muted-foreground mx-2">{tStr("or") || "or"}</span>
+                        <Button type="button" variant="outline" onClick={() => { openDancePanel(index); }} className="bg-transparent w-full sm:flex-1">
                           <Plus className="mr-2 h-4 w-4" />{tStr("addAnotherDance")}
                         </Button>
                       </div>
 
                       {/* Toggle panel below: text editor or dance selector */}
                       {panelOpen[index] === 'text' && (
-                        <div className="mt-3 border rounded-md p-3 bg-muted/30">
+                        <div className="mt-3 border rounded-md p-2 sm:p-3 bg-muted/30">
                           <div className="space-y-4">
                             <div className="space-y-2">
                               <Label htmlFor={`pending-text-ru-${index}`}>Русский</Label>
@@ -598,18 +623,21 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                         </div>
                       )}
 
-                      <DanceSelector
-                        sectionDances={section.dances as any}
-                        filteredDances={filteredDances}
-                        index={index}
-                        language={language}
-                        t={tStr}
-                        danceSearch={danceSearch}
-                        setDanceSearch={setDanceSearch}
-                        addDanceToSection={addDanceToSectionAndClose}
-                        open={panelOpen[index] === 'dance'}
-                        onOpenChange={(open) => setPanelOpen(prev => ({ ...prev, [index]: open ? 'dance' : null }))}
-                      />
+                      {/* Ensure DanceSelector fits mobile */}
+                      <div className="mt-2">
+                        <DanceSelector
+                          sectionDances={section.dances as any}
+                          filteredDances={filteredDances}
+                          index={index}
+                          language={language}
+                          t={tStr}
+                          danceSearch={danceSearch}
+                          setDanceSearch={setDanceSearch}
+                          addDanceToSection={addDanceToSectionAndClose}
+                          open={panelOpen[index] === 'dance'}
+                          onOpenChange={(open) => setPanelOpen(prev => ({ ...prev, [index]: open ? 'dance' : null }))}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -622,7 +650,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
             </Button>
           </div>
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex flex-col sm:flex-row gap-2 justify-end">
             <Button variant="outline" onClick={() => setOpen(false)}>
               {t("cancel")}
             </Button>
@@ -632,5 +660,6 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
           </div>
         </DialogContent>
       </Dialog>
+      </DndContext>
   )
 }

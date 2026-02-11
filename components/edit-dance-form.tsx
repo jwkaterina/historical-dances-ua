@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useLanguage } from "@/components/language-provider"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
@@ -50,6 +49,7 @@ interface Dance {
   difficulty: string | null
   youtube_url: string | null
   video_url: string | null
+  origin?: string | null
 }
 
 interface EditDanceFormProps {
@@ -71,7 +71,6 @@ export function EditDanceForm({ dance, musicTracks }: EditDanceFormProps) {
   const [descriptionRu, setDescriptionRu] = useState(dance.description_ru || "")
   const [schemeRu, setSchemeRu] = useState(dance.scheme_ru || "")
   const [difficulty, setDifficulty] = useState(dance.difficulty || "")
-  const [origin, setOrigin] = useState(dance.origin || "")
   const [youtubeUrl, setYoutubeUrl] = useState(dance.youtube_url || "")
   const [videoUrl, setVideoUrl] = useState(dance.video_url || "")
   const [videoFile, setVideoFile] = useState<File | null>(null)
@@ -104,7 +103,6 @@ export function EditDanceForm({ dance, musicTracks }: EditDanceFormProps) {
     setDescriptionRu(dance.description_ru || "")
     setSchemeRu(dance.scheme_ru || "")
     setDifficulty(dance.difficulty || "")
-    setOrigin(dance.origin || "")
     setYoutubeUrl(dance.youtube_url || "")
     setVideoUrl(dance.video_url || "")
     setVideoFile(null)
@@ -330,6 +328,7 @@ export function EditDanceForm({ dance, musicTracks }: EditDanceFormProps) {
           difficulty: difficulty || null,
           youtube_url: youtubeUrl || null,
           video_url: finalVideoUrl || null,
+          origin: dance.origin ?? null,
         },
         musicEntriesForSubmit
       )
@@ -360,12 +359,12 @@ export function EditDanceForm({ dance, musicTracks }: EditDanceFormProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" className="w-full sm:w-auto">
           <Pencil className="mr-2 h-4 w-4" />
           {t("editDance")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl pb-20 sm:pb-6">
+      <DialogContent className="max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
         <DialogHeader>
           <DialogTitle>{t("editDanceInfo")}</DialogTitle>
         </DialogHeader>
@@ -437,7 +436,7 @@ export function EditDanceForm({ dance, musicTracks }: EditDanceFormProps) {
           </div>
 
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-difficulty">{t("difficulty")}</Label>
                 <Select value={difficulty} onValueChange={setDifficulty}>
@@ -464,7 +463,7 @@ export function EditDanceForm({ dance, musicTracks }: EditDanceFormProps) {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label>{t("videoFile")}</Label>
                 {videoFile ? (
                   <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
@@ -525,7 +524,7 @@ export function EditDanceForm({ dance, musicTracks }: EditDanceFormProps) {
             <h3 className="font-medium text-foreground">{t("musicTracks")}</h3>
 
             {musicEntries.map((music, index) => (
-              <div key={index} className="space-y-3 rounded-lg border border-border p-4">
+              <div key={index} className="space-y-3 rounded-lg border border-border p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Track {index + 1}</span>
                   {musicEntries.length > 1 && (
@@ -631,7 +630,7 @@ export function EditDanceForm({ dance, musicTracks }: EditDanceFormProps) {
             </Button>
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col sm:flex-row justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {t("cancel")}
             </Button>
