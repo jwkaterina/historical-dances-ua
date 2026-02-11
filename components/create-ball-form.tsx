@@ -21,7 +21,7 @@ import { createBall, updateBall } from "@/app/actions/ball"
 import { useLanguage } from "@/hooks/use-language"
 
 // dnd-kit imports
-import { DndContext, DragEndEvent } from "@dnd-kit/core"
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
@@ -134,7 +134,8 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
   const [panelOpen, setPanelOpen] = useState<Record<number, 'text' | 'dance' | null>>({})
   const [pendingText, setPendingText] = useState<Record<number, { ru: string; de: string } | null>>({})
 
-  if (!isAdmin) return null
+  // Remove early return; ensure hooks order is consistent across renders
+  // if (!isAdmin) return null
 
   const filteredDances = dances.filter((dance) => {
     const displayName = language === "ru" ? (dance.name_ru || dance.name) : (dance.name_de || dance.name)
@@ -370,8 +371,22 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     }
   }
 
+  // Configure sensors: PointerSensor with activation constraint improves mobile DnD
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // require slight movement to start drag to avoid accidental scroll/tap
+      },
+    })
+  )
+
+  // Guard rendering after hooks are defined to keep hooks order stable
+  if (!isAdmin) {
+    return null
+  }
+
   return (
-      <DndContext onDragEnd={onDragEnd}>
+      <DndContext onDragEnd={onDragEnd} sensors={sensors}>
       <Dialog
           open={open}
           onOpenChange={(newOpen) => {
@@ -458,6 +473,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                                   aria-label="Drag entry"
                                   {...listeners}
                                   title="Drag"
+                                  style={{ touchAction: 'none' }}
                                 >
                                   <GripVertical className="h-4 w-4" />
                                 </span>
