@@ -384,7 +384,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
             {ballToEdit ? t("editBall") : (<><Plus className="mr-2 h-4 w-4" />{t("createBall")}</>)}
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl pb-20 sm:pb-6">
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
           <DialogHeader>
             <DialogTitle>{ballToEdit ? t("editBall") : t("createBall")}</DialogTitle>
           </DialogHeader>
@@ -405,7 +405,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
             <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="city-ru">{language === "ru" ? "Город" : "Stadt"} \(Русский\)</Label>
               <Input id="city-ru" value={selectedCityRU} onChange={(e) => setSelectedCityRU(e.target.value)} placeholder="напр. Москва" />
@@ -420,7 +420,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
             <Label>{t("sections")}</Label>
             {sections.map((section, index) => {
               return (
-                <div key={index} className="border rounded-lg p-4 space-y-3">
+                <div key={index} className="border rounded-lg p-3 sm:p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">{t("section")} {index + 1}</h3>
                     {sections.length > 1 && (
@@ -448,7 +448,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                               ref={setNodeRef}
                               style={style}
                               {...attributes}
-                              className={`border rounded-md p-3 bg-muted/30`}
+                              className={`border rounded-md p-2 sm:p-3 bg-muted/30`}
                             >
                               <div className="flex items-center gap-2">
                                 <span
@@ -467,7 +467,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                                   </div>
                                 )}
 
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                   {entry.kind === "dance" ? (
                                     <div className="flex items-center gap-2">
                                       <div className="flex-1">
@@ -578,19 +578,19 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                     </SortableContext>
 
                     <div className="w-full">
-                      <div className="flex w-full items-center gap-2">
-                        <Button type="button" variant="outline" onClick={() => { openTextPanel(index); }} className="bg-transparent flex-1">
+                      <div className="flex w-full flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <Button type="button" variant="outline" onClick={() => { openTextPanel(index); }} className="bg-transparent w-full sm:flex-1">
                           <Plus className="mr-2 h-4 w-4" />{tStr("addText") || "Add text"}
                         </Button>
-                        <span className="text-sm text-muted-foreground mx-2">{tStr("or") || "or"}</span>
-                        <Button type="button" variant="outline" onClick={() => { openDancePanel(index); }} className="bg-transparent flex-1">
+                        <span className="hidden sm:inline text-sm text-muted-foreground mx-2">{tStr("or") || "or"}</span>
+                        <Button type="button" variant="outline" onClick={() => { openDancePanel(index); }} className="bg-transparent w-full sm:flex-1">
                           <Plus className="mr-2 h-4 w-4" />{tStr("addAnotherDance")}
                         </Button>
                       </div>
 
                       {/* Toggle panel below: text editor or dance selector */}
                       {panelOpen[index] === 'text' && (
-                        <div className="mt-3 border rounded-md p-3 bg-muted/30">
+                        <div className="mt-3 border rounded-md p-2 sm:p-3 bg-muted/30">
                           <div className="space-y-4">
                             <div className="space-y-2">
                               <Label htmlFor={`pending-text-ru-${index}`}>Русский</Label>
@@ -622,18 +622,21 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
                         </div>
                       )}
 
-                      <DanceSelector
-                        sectionDances={section.dances as any}
-                        filteredDances={filteredDances}
-                        index={index}
-                        language={language}
-                        t={tStr}
-                        danceSearch={danceSearch}
-                        setDanceSearch={setDanceSearch}
-                        addDanceToSection={addDanceToSectionAndClose}
-                        open={panelOpen[index] === 'dance'}
-                        onOpenChange={(open) => setPanelOpen(prev => ({ ...prev, [index]: open ? 'dance' : null }))}
-                      />
+                      {/* Ensure DanceSelector fits mobile */}
+                      <div className="mt-2">
+                        <DanceSelector
+                          sectionDances={section.dances as any}
+                          filteredDances={filteredDances}
+                          index={index}
+                          language={language}
+                          t={tStr}
+                          danceSearch={danceSearch}
+                          setDanceSearch={setDanceSearch}
+                          addDanceToSection={addDanceToSectionAndClose}
+                          open={panelOpen[index] === 'dance'}
+                          onOpenChange={(open) => setPanelOpen(prev => ({ ...prev, [index]: open ? 'dance' : null }))}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -646,7 +649,7 @@ export function CreateBallForm({ dances, ballToEdit }: CreateBallFormProps) {
             </Button>
           </div>
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex flex-col sm:flex-row gap-2 justify-end">
             <Button variant="outline" onClick={() => setOpen(false)}>
               {t("cancel")}
             </Button>
