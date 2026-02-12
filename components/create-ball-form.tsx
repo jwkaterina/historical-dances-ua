@@ -327,6 +327,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     setPanelOpen(prev => ({ ...prev, [index]: prev[index] === 'text' ? null : 'text' }))
     setPendingText(prev => ({ ...prev, [index]: prev[index] ?? { ru: "", de: "" } }))
   }
+
   const openDancePanel = (index: number) => {
     setPanelOpen(prev => {
       const isOpen = prev[index] === 'dance'
@@ -337,9 +338,11 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
       return { ...prev, [index]: isOpen ? null : 'dance' }
     })
   }
+
   const closePanel = (index: number) => {
     setPanelOpen(prev => ({ ...prev, [index]: null }))
   }
+
   const savePendingText = (index: number) => {
     const buf = pendingText[index]
     if (!buf || (!buf.ru.trim() && !buf.de.trim())) {
@@ -640,35 +643,66 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                           ) : (
                             <div className="space-y-2">
                               {(entry as any).isEditing ? (
-                                // ...existing edit text UI...
-                                <></>
-                              ) : (
-                                <div className="pl-10">
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex-1">
-                                      <div className="text-sm whitespace-pre-wrap font-semibold text-[#6b3e26]">
-                                        {language === "ru" ? ((entry as any).content_ru || "") : ((entry as any).content_de || "")}
-                                      </div>
-                                      {/* Edit text visible in view mode */}
-                                      <div className="mt-4">
-                                        <button type="button" onClick={() => {
-                                          const current = [...sections[index].dances]
-                                          const e = current[danceIndex]
-                                          if (e?.kind === "text") {
-                                            current[danceIndex] = { ...(e as any), isEditing: true }
-                                            updateSection(index, "dances", current)
-                                          }
-                                        }} className="text-xs border rounded px-2 py-1 bg-background hover:bg-accent/20">
-                                          {language === "ru" ? "Редактировать" : "Bearbeiten"}
-                                        </button>
-                                      </div>
+                                  <>
+                                    <div className="space-y-2 pl-10">
+                                      <Label htmlFor="section-text-ru">Русский</Label>
+                                      <Input
+                                          id="section-text-ru"
+                                          value={(entry as any).content_ru || ""}
+                                          onChange={(e) => updateTextEntry(index, danceIndex, {content_ru: e.target.value})}
+                                          placeholder={"Напр. 'Подарочный танец от Берлина'"}
+                                      />
                                     </div>
-                                    {/* Remove text visible in view mode */}
-                                    <button onClick={() => removeEntryFromSection(index, danceIndex)} className="text-destructive hover:text-destructive/80" aria-label="Remove text" title="Remove">
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
+                                    <div className="space-y-2 pl-10">
+                                      <Label htmlFor="section-text-de">Deutsch</Label>
+                                      <Input
+                                          id="section-text-de"
+                                          value={(entry as any).content_de || ""}
+                                          onChange={(e) => updateTextEntry(index, danceIndex, {content_de: e.target.value})}
+                                          placeholder={"Z.b. 'Ein Geschenktanz aus Berlin'"}
+                                      />
+                                    </div>
+                                    <div className="pl-10">
+                                      <button
+                                          type="button"
+                                          onClick={() => saveTextEntry(index, danceIndex)}
+                                          className="text-xs px-2 py-1 rounded border hover:bg-accent/20"
+                                      >
+                                        <Save className="inline-block mr-1 h-3 w-3"/>
+                                        {tStr("save") || "Save"}
+                                      </button>
+                                    </div>
+                                  </>
+                              ) : (
+                                  <div className="pl-10">
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex-1">
+                                        <div className="text-sm whitespace-pre-wrap font-semibold text-[#6b3e26]">
+                                          {language === "ru" ? ((entry as any).content_ru || "") : ((entry as any).content_de || "")}
+                                        </div>
+                                        {/* Edit text visible in view mode */}
+                                        <div className="mt-4">
+                                          <button type="button" onClick={() => {
+                                            const current = [...sections[index].dances]
+                                            const e = current[danceIndex]
+                                            if (e?.kind === "text") {
+                                              current[danceIndex] = {...(e as any), isEditing: true}
+                                              updateSection(index, "dances", current)
+                                            }
+                                          }}
+                                                  className="text-xs border rounded px-2 py-1 bg-background hover:bg-accent/20">
+                                            {language === "ru" ? "Редактировать" : "Bearbeiten"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                      {/* Remove text visible in view mode */}
+                                      <button onClick={() => removeEntryFromSection(index, danceIndex)}
+                                              className="text-destructive hover:text-destructive/80"
+                                              aria-label="Remove text" title="Remove">
+                                        <Trash2 className="h-4 w-4"/>
+                                      </button>
+                                    </div>
                                   </div>
-                                </div>
                               )}
                             </div>
                           )}
