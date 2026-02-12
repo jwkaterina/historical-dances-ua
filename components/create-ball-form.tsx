@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Edit, Plus, Trash2, GripVertical} from "lucide-react"
+import { Edit, Plus, Trash2, GripVertical, X, Save} from "lucide-react"
 import DanceSelector from "@/components/ui/dance-selector"
 import {
   Dialog,
@@ -690,22 +690,57 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                     </div>
 
                     {panelOpen[index] === 'text' && (
-                      // ...existing text panel UI...
-                      <></>
+                        <div className="mt-3 border rounded-md p-2 sm:p-3 bg-muted/30">
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor={`pending-text-ru-${index}`}>Русский</Label>
+                              <Input
+                                  id={`pending-text-ru-${index}`}
+                                  value={pendingText[index]?.ru ?? ""}
+                                  onChange={(e) => setPendingText(prev => ({
+                                    ...prev,
+                                    [index]: {ru: e.target.value, de: prev[index]?.de ?? ""}
+                                  }))}
+                                  placeholder={"Напр. 'Подарочный танец от Берлина'"}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`pending-text-de-${index}`}>Deutsch</Label>
+                              <Input
+                                  id={`pending-text-de-${index}`}
+                                  value={pendingText[index]?.de ?? ""}
+                                  onChange={(e) => setPendingText(prev => ({
+                                    ...prev,
+                                    [index]: {ru: prev[index]?.ru ?? "", de: e.target.value}
+                                  }))}
+                                  placeholder={"Z.b. 'Ein Geschenktanz aus Berlin'"}
+                              />
+                            </div>
+                          </div>
+                          <div className="mt-2 flex items-center gap-2">
+                            <Button type="button" variant="outline" onClick={() => savePendingText(index)}
+                                    className="bg-transparent">
+                              <Save className="mr-2 h-4 w-4"/>{tStr("save") || "Save"}
+                            </Button>
+                            <Button type="button" variant="ghost" onClick={() => closePanel(index)}>
+                              <X className="mr-2 h-4 w-4"/>{tStr("cancel") || "Cancel"}
+                            </Button>
+                          </div>
+                        </div>
                     )}
 
                     <div className="mt-2">
                       <DanceSelector
-                        sectionDances={section.dances as any}
-                        filteredDances={filteredDances}
-                        index={index}
-                        language={language}
-                        t={tStr}
-                        danceSearch={danceSearch}
-                        setDanceSearch={setDanceSearch}
-                        addDanceToSection={addDanceToSectionAndClose}
-                        open={panelOpen[index] === 'dance'}
-                        onOpenChange={(open) => setPanelOpen(prev => ({ ...prev, [index]: open ? 'dance' : null }))}
+                          sectionDances={section.dances as any}
+                          filteredDances={filteredDances}
+                          index={index}
+                          language={language}
+                          t={tStr}
+                          danceSearch={danceSearch}
+                          setDanceSearch={setDanceSearch}
+                          addDanceToSection={addDanceToSectionAndClose}
+                          open={panelOpen[index] === 'dance'}
+                          onOpenChange={(open) => setPanelOpen(prev => ({...prev, [index]: open ? 'dance' : null}))}
                       />
                     </div>
                   </div>
@@ -713,7 +748,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
               ))}
 
               <Button type="button" variant="outline" onClick={addSection} className="w-full bg-transparent">
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-4 w-4"/>
                 {t("addSection")}
               </Button>
             </div>
