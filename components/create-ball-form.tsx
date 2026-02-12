@@ -259,7 +259,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
   }
 
   // Track active item for DragOverlay rendering
-  const [setActiveDrag] = useState<{ sectionIndex: number; danceIndex: number } | null>(null)
+  const [activeDrag, setActiveDrag] = useState<{ sectionIndex: number; danceIndex: number } | null>(null)
 
   // dnd-kit drag end handler: supports intra-section and cross-section reordering
   const onDragEnd = (event: DragEndEvent) => {
