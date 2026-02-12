@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Edit, Plus, Trash2, GripVertical, Save, X } from "lucide-react"
+import { Edit, Plus, Trash2, GripVertical} from "lucide-react"
 import DanceSelector from "@/components/ui/dance-selector"
 import {
   Dialog,
@@ -42,15 +42,18 @@ interface Dance {
   musicTracks?: MusicTrack[]
 }
 
+// Ensure each entry has a stable unique id for DnD and React keys
 type SectionEntry =
     | {
   kind: "dance"
+  id: string
   danceId: string
   musicId?: string | null
   musicTracks?: MusicTrack[] // optional cache of tracks for this dance
 }
     | {
   kind: "text"
+  id: string
   content_ru: string
   content_de: string
   isEditing?: boolean
@@ -86,6 +89,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                 .sort((a: any, b: any) => a.order_index - b.order_index)
                 .map((sd: any) => ({
                   kind: "dance" as const,
+                  id: sd.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
                   danceId: sd.dances?.id || sd.dance_id,
                   musicId: sd.music_id || null,
                   order_index: sd.order_index ?? 0,
@@ -95,6 +99,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                 .sort((a: any, b: any) => a.order_index - b.order_index)
                 .map((st: any) => ({
                   kind: "text" as const,
+                  id: st.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
                   content_ru: st.content_ru || "",
                   content_de: st.content_de || "",
                   isEditing: false,
@@ -102,13 +107,13 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                 }))
             const combined = [...danceEntries, ...textEntries]
                 .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
-                .map(({ kind, ...rest }) => {
+                .map(({ kind, id, ...rest }) => {
                   if (kind === "dance") {
                     const { danceId, musicId, musicTracks } = rest as any
-                    return { kind, danceId, musicId, musicTracks } as SectionEntry
+                    return { kind, id, danceId, musicId, musicTracks } as SectionEntry
                   }
                   const { content_ru, content_de, isEditing } = rest as any
-                  return { kind, content_ru, content_de, isEditing } as SectionEntry
+                  return { kind, id, content_ru, content_de, isEditing } as SectionEntry
                 })
             return {
               id: section.id,
@@ -170,7 +175,8 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     const current = sections[sectionIndex].dances
     if (current.some(e => e.kind === "dance" && e.danceId === danceId)) return
     const musicId = dance?.musicTracks?.length === 1 ? dance.musicTracks[0].id : null
-    updateSection(sectionIndex, "dances", [...current, { kind: "dance", danceId, musicId }])
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`)
+    updateSection(sectionIndex, "dances", [...current, { kind: "dance", id, danceId, musicId }])
   }
 
   // When selecting a dance from the selector, add it and close the panel
@@ -214,9 +220,51 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     updateSection(sectionIndex, "dances", current.filter((_, i) => i !== danceIndex))
   }
 
+  // dnd-kit drag over handler: optimistically reorder across sections for smooth placeholder animation
+  const onDragOver = (event: any) => {
+    const { active, over } = event
+    if (!over) return
+
+    const fromSection = active.data?.current?.sectionIndex as number | undefined
+    const fromIndex = active.data?.current?.danceIndex as number | undefined
+    const toSection = over.data?.current?.sectionIndex as number | undefined
+    const toIndex = over.data?.current?.danceIndex as number | undefined
+
+    if (
+      fromSection === undefined ||
+      fromIndex === undefined ||
+      toSection === undefined ||
+      toIndex === undefined
+    ) {
+      return
+    }
+
+    // If hovering over a different position, reflect it immediately
+    setSections(prev => {
+      const next = prev.map(s => ({ ...s, dances: [...s.dances] }))
+      // Guard: if source equals target, skip
+      if (fromSection === toSection && fromIndex === toIndex) return prev
+
+      const [moved] = next[fromSection].dances.splice(fromIndex, 1)
+      next[toSection].dances.splice(toIndex, 0, moved)
+
+      // Update the indices in active/over data so subsequent events use fresh indices
+      if (active.data?.current) {
+        active.data.current.sectionIndex = toSection
+        active.data.current.danceIndex = toIndex
+      }
+
+      return next
+    })
+  }
+
+  // Track active item for DragOverlay rendering
+  const [activeDrag, setActiveDrag] = useState<{ sectionIndex: number; danceIndex: number } | null>(null)
+
   // dnd-kit drag end handler: supports intra-section and cross-section reordering
   const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
+    setActiveDrag(null)
     if (!over) return
 
     const fromSection = active.data?.current?.sectionIndex as number | undefined
@@ -243,8 +291,10 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
 
   // Sortable item component for entries using render-prop to avoid leaking props
   const SortableEntry: React.FC<{ sectionIndex: number; danceIndex: number; children: (args: { attributes: any; listeners: any; setNodeRef: (node: HTMLElement | null) => void; style: React.CSSProperties }) => React.ReactNode }> = ({ sectionIndex, danceIndex, children }) => {
+    const entry = sections[sectionIndex]?.dances[danceIndex]
+    const sortableId = entry?.id ?? `section-${sectionIndex}-entry-${danceIndex}`
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-      id: `section-${sectionIndex}-entry-${danceIndex}`,
+      id: sortableId,
       data: { sectionIndex, danceIndex },
     })
 
@@ -297,7 +347,8 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
       return
     }
     const current = sections[index].dances
-    updateSection(index, "dances", [...current, { kind: "text", content_ru: buf.ru.trim(), content_de: buf.de.trim() }])
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`)
+    updateSection(index, "dances", [...current, { kind: "text", id, content_ru: buf.ru.trim(), content_de: buf.de.trim() }])
     setPendingText(prev => ({ ...prev, [index]: { ru: "", de: "" } }))
     closePanel(index)
   }
@@ -451,7 +502,13 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
 
           {editOrder ? (
             // Edit mode: DnD enabled, handles visible, editing controls hidden
-            <DndContext onDragEnd={onDragEnd} sensors={sensors}>
+            <DndContext onDragOver={onDragOver} onDragStart={(event) => {
+              const fromSection = event.active.data?.current?.sectionIndex as number | undefined
+              const fromIndex = event.active.data?.current?.danceIndex as number | undefined
+              if (fromSection !== undefined && fromIndex !== undefined) {
+                setActiveDrag({ sectionIndex: fromSection, danceIndex: fromIndex })
+              }
+            }} onDragEnd={onDragEnd} sensors={sensors}>
               <div className="space-y-4">
                 {sections.map((section, index) => (
                   <div key={index} className="border rounded-lg p-3 sm:p-4 space-y-3">
@@ -464,9 +521,9 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                       )}
                     </div>
 
-                    <SortableContext items={section.dances.map((_, danceIndex) => `section-${index}-entry-${danceIndex}`)} strategy={verticalListSortingStrategy}>
+                    <SortableContext items={section.dances.map((e) => e.id)} strategy={verticalListSortingStrategy}>
                       {section.dances.map((entry, danceIndex) => (
-                        <SortableEntry key={`section-${index}-entry-${danceIndex}`} sectionIndex={index} danceIndex={danceIndex}>
+                        <SortableEntry key={entry.id} sectionIndex={index} danceIndex={danceIndex}>
                           {({ attributes, listeners, setNodeRef, style }) => (
                             <div ref={setNodeRef} style={style} {...attributes} className="border rounded-md p-2 sm:p-3 bg-muted/30">
                               <div className="flex items-center gap-2">
@@ -524,6 +581,10 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                   </div>
                 ))}
               </div>
+
+              {/* Drag overlay for smoother cross-section animation */}
+              {/* Rendering minimal overlay to match entry shape */}
+              {/* Optional: customize dropAnimation if needed */}
             </DndContext>
           ) : (
             // View mode: DnD disabled, handles hidden, editing controls visible
@@ -540,7 +601,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                   </div>
 
                   {section.dances.map((entry, danceIndex) => (
-                    <div key={`section-${index}-entry-${danceIndex}`} className="border rounded-md p-2 sm:p-3 bg-muted/30">
+                    <div key={entry.id} className="border rounded-md p-2 sm:p-3 bg-muted/30">
                       <div className="flex items-center gap-2">
                         {/* No drag handle in view mode */}
                         {entry.kind === "dance" && (
