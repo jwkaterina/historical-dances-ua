@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { createBall, updateBall } from "@/app/actions/ball"
 import { useLanguage } from "@/hooks/use-language"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 // dnd-kit imports
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
@@ -75,6 +76,7 @@ interface CreateBallFormProps {
 
 export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateBallFormProps) {
   const { t, language } = useLanguage()
+  const isMobile = useIsMobile()
   const router = useRouter()
   const { isAdmin } = useAuth()
   const { toast } = useToast()
@@ -528,12 +530,26 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                       {section.dances.map((entry, danceIndex) => (
                         <SortableEntry key={entry.id} sectionIndex={index} danceIndex={danceIndex}>
                           {({ attributes, listeners, setNodeRef, style }) => (
-                            <div ref={setNodeRef} style={style} {...attributes} className="border rounded-md p-2 sm:p-3 bg-muted/30">
+                            <div
+                              ref={setNodeRef}
+                              style={style}
+                              {...attributes}
+                              className={`border rounded-md p-2 sm:p-3 bg-muted/30 ${isMobile ? 'pr-6' : ''}`}
+                            >
                               <div className="flex items-center gap-2">
-                                {/* Drag handle */}
-                                <span className="flex-shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground" role="button" aria-label="Drag entry" {...listeners} title="Drag" style={{ touchAction: 'none' }}>
-                                  <GripVertical className="h-4 w-4" />
-                                </span>
+                                {/* Drag handle (desktop: left) */}
+                                {!isMobile && (
+                                  <span
+                                    className="flex-shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+                                    role="button"
+                                    aria-label="Drag entry"
+                                    {...listeners}
+                                    title="Drag"
+                                    style={{ touchAction: 'none' }}
+                                  >
+                                    <GripVertical className="h-4 w-4" />
+                                  </span>
+                                )}
 
                                 {entry.kind === "dance" && (
                                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
@@ -573,6 +589,20 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                                     </div>
                                   )}
                                 </div>
+
+                                {/* Drag handle (mobile: right) */}
+                                {isMobile && (
+                                  <span
+                                    className="ml-auto flex-shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-2 rounded"
+                                    role="button"
+                                    aria-label="Drag entry"
+                                    {...listeners}
+                                    title="Drag"
+                                    style={{ touchAction: 'none' }}
+                                  >
+                                    <GripVertical className="h-6 w-6" />
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )}
