@@ -9,7 +9,7 @@ interface SectionText {content_de: string
 
 interface SectionDanceEntry {
   danceId: string
-  musicId?: string | null
+  musicIds?: string[]
 }
 
 interface Section {
@@ -17,16 +17,13 @@ interface Section {
   name: string
   name_de: string
   name_ru: string
-  // legacy arrays (may be omitted) or new unified `entries` array
   dances?: SectionDanceEntry[]
   texts?: SectionText[]
   entries?: Array<{
     kind: 'dance' | 'text'
     order_index: number
-    // dance-specific
     danceId?: string
-    musicId?: string | null
-    // text-specific
+    musicIds?: string[]
     content_de?: string
     content_ru?: string
   }>
@@ -69,19 +66,13 @@ export async function getBalls() {
             id,
             order_index,
             dance_id,
-            music_id,
+            music_ids,
             dances:dance_id (
               id,
               name,
               name_de,
               name_ru,
               difficulty
-            ),
-            music:music_id (
-              id,
-              title,
-              artist,
-              audio_url
             )
           ),
           section_texts (
@@ -142,19 +133,13 @@ export async function getBallById(id: string) {
             id,
             order_index,
             dance_id,
-            music_id,
+            music_ids,
             dances:dance_id (
               id,
               name,
               name_de,
               name_ru,
               difficulty
-            ),
-            music:music_id (
-              id,
-              title,
-              artist,
-              audio_url
             )
           ),section_texts (
             id,
@@ -248,7 +233,7 @@ export async function createBall(ballData: BallData) {
           // Insert dances and texts separately using provided order_index values
           const dancesToInsert = sorted
               .filter(e => e.kind === 'dance')
-              .map((e: any) => ({ section_id: sectionData.id, order_index: e.order_index, dance_id: e.danceId, music_id: e.musicId ?? null }))
+              .map((e: any) => ({ section_id: sectionData.id, order_index: e.order_index, dance_id: e.danceId, music_ids: Array.isArray(e.musicIds) ? e.musicIds : [] }))
           if (dancesToInsert.length > 0) {
             const { error: dancesError } = await supabase.from('section_dances').insert(dancesToInsert)
             if (dancesError) throw dancesError
@@ -368,7 +353,7 @@ export async function updateBall(id: string, ballData: BallData) {
 
         const dancesToInsert = sorted
             .filter(e => e.kind === 'dance')
-            .map((e: any) => ({ section_id: sectionData.id, order_index: e.order_index, dance_id: e.danceId, music_id: e.musicId ?? null }))
+            .map((e: any) => ({ section_id: sectionData.id, order_index: e.order_index, dance_id: e.danceId, music_ids: Array.isArray(e.musicIds) ? e.musicIds : [] }))
         if (dancesToInsert.length > 0) {
           const { error: dancesError } = await supabase.from('section_dances').insert(dancesToInsert)
           if (dancesError) throw dancesError

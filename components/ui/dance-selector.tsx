@@ -25,8 +25,14 @@ function DanceSelector({
     onOpenChange?: (open: boolean) => void
 }) {
     useEffect(() => {
-        // Optional side effects on open/close
-    }, [open])
+        if (open) {
+            // Autofocus the search input when panel opens
+            setTimeout(() => {
+                const el = document.getElementById(`dance-search-${index}`) as HTMLInputElement | null
+                el?.focus()
+            }, 0)
+        }
+    }, [open, index])
 
     const handleAddDance = (danceId: string) => {
         addDanceToSection(index, danceId)
