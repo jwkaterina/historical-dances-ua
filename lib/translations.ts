@@ -283,6 +283,8 @@ export const translations = {
     dropHereToAddAtEnd: "Hierher ziehen, um am Ende hinzuzufügen",
     loading: "Lädt...",
     chooseLater: "Später auswählen",
+    editOrder: "Reihenfolge bearbeiten",
+    done: "Fertig",
     
     // Sections (Abteilung)
     section: "Abteilung",
@@ -495,6 +497,8 @@ export const translations = {
     dropHereToAddAtEnd: "Перетащите сюда, чтобы добавить в конец",
     loading: "Загрузка...",
     chooseLater: "Выбрать позже",
+    editOrder: "Редактировать порядок",
+    done: "Готово",
     
     // Sections (Abteilung -> Отделение)
     section: "Отделение",

@@ -501,7 +501,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
               }}
             >
               <GripVertical className="mr-2 h-4 w-4" />
-              {language === "ru" ? (editOrder ? "Готово" : "Редактировать порядок") : (editOrder ? "Done" : "Edit order")}
+              {editOrder ? t('done') : t('editOrder')}
             </Button>
           </div>
 
