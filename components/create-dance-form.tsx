@@ -343,7 +343,7 @@ export function CreateDanceForm() {
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
         <DialogHeader>
-          <DialogTitle>{t("addNewDance")}</DialogTitle>
+          <DialogTitle>{t("createDance")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">

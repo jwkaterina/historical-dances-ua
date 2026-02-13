@@ -366,7 +366,7 @@ export function EditDanceForm({ dance, musicTracks }: EditDanceFormProps) {
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
         <DialogHeader>
-          <DialogTitle>{t("editDanceInfo")}</DialogTitle>
+          <DialogTitle>{t("editDance")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">

@@ -105,41 +105,48 @@ export function BallsContent({ balls, dances, query }: BallsContentProps) {
         <CreateBallForm dances={dances} />
       </div>
       <div className="mb-6 flex flex-col gap-4">
-        <Suspense fallback={null}>
-          <SearchInput placeholder={t("searchBalls")} />
-        </Suspense>
-
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("filterByYear")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allYears")}</SelectItem>
-                {uniqueYears.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Responsive row: column on mobile, row on desktop */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+          {/* Search takes the left side on desktop */}
+          <div className="sm:flex-1">
+            <Suspense fallback={null}>
+              <SearchInput placeholder={t("searchBalls")} />
+            </Suspense>
           </div>
 
-          <div className="flex-1">
-            <Select value={selectedCity} onValueChange={setSelectedCity}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("filterByCity")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allCities")}</SelectItem>
-                {uniqueCities.map((city) => (
-                  <SelectItem key={city} value={city}>
-                    {getCityDisplay(city)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Filters: on mobile they appear below search and share a row equally; on desktop they sit to the right of search */}
+          <div className="mt-4 sm:mt-0 flex flex-row gap-2 sm:flex-none">
+            <div className="flex-1 sm:flex-none">
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t("filterByYear")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("allYears")}</SelectItem>
+                  {uniqueYears.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex-1 sm:flex-none">
+              <Select value={selectedCity} onValueChange={setSelectedCity}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t("filterByCity")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("allCities")}</SelectItem>
+                  {uniqueCities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {getCityDisplay(city)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
