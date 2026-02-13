@@ -176,9 +176,11 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     const dance = dances.find(d => d.id === danceId)
     const current = sections[sectionIndex].dances
     if (current.some(e => e.kind === "dance" && e.danceId === danceId)) return
-    const musicId = dance?.musicTracks?.length === 1 ? dance.musicTracks[0].id : null
+    const musicTracks = dance?.musicTracks ?? []
+    // Select first available track if any exist
+    const musicId = musicTracks.length > 0 ? musicTracks[0].id : null
     const id = (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`)
-    updateSection(sectionIndex, "dances", [...current, { kind: "dance", id, danceId, musicId }])
+    updateSection(sectionIndex, "dances", [...current, { kind: "dance", id, danceId, musicId, musicTracks }])
   }
 
   // When selecting a dance from the selector, add it and close the panel
@@ -186,6 +188,14 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     addDanceToSection(sectionIndex, danceId)
     setPanelOpen(prev => ({ ...prev, [sectionIndex]: null }))
     setDanceSearch("")
+  }
+
+  const updateDanceMusicInSection = (sectionIndex: number, danceIndex: number, musicId: string | null) => {
+    const current = [...sections[sectionIndex].dances]
+    const entry = current[danceIndex]
+    if (entry?.kind !== "dance") return
+    current[danceIndex] = { ...entry, musicId }
+    updateSection(sectionIndex, "dances", current)
   }
 
   // Accept partial updates for localized text fields
@@ -206,14 +216,6 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     const entry = current[danceIndex]
     if (entry?.kind !== "text") return
     current[danceIndex] = { ...entry, isEditing: false }
-    updateSection(sectionIndex, "dances", current)
-  }
-
-  const updateDanceMusicInSection = (sectionIndex: number, danceIndex: number, musicId: string | null) => {
-    const current = [...sections[sectionIndex].dances]
-    const entry = current[danceIndex]
-    if (entry?.kind !== "dance") return
-    current[danceIndex] = { ...entry, musicId }
     updateSection(sectionIndex, "dances", current)
   }
 
