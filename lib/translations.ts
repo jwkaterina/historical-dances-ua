@@ -46,8 +46,8 @@ export const translations = {
     // Forms
     createDance: "Tanz erstellen",
     editDance: "Tanz bearbeiten",
-    addNewDance: "Neuen Tanz hinzufügen",
-    editDanceInfo: "Tanzinformationen bearbeiten",
+    createDance: "Tanz erstellen",
+    editDance: "Tanz bearbeiten",
     addText: "Text hinzufügen",
     german: "Deutsch",
     russian: "Russisch",
@@ -260,8 +260,6 @@ export const translations = {
     // Forms
     createDance: "Создать танец",
     editDance: "Редактировать танец",
-    addNewDance: "Добавить новый танец",
-    editDanceInfo: "Редактирование информации о танце",
     addText: "Добавить текст",
     german: "Немецкий",
     russian: "Русский",
