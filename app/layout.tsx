@@ -18,21 +18,17 @@ export const metadata: Metadata = {
   description: 'A collection of dances with schemes and music',
   generator: 'v0.app',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
+    // Use favicon.ico in app for browser favicon
+    icon: '/favicon.ico',
+    // Use Apple touch icon from app
     apple: '/apple-icon.png',
+  },
+  // Point to your app-level manifest
+  manifest: '/manifest.json',
+  other: {
+    'apple-mobile-web-app-title': 'Dances',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
   },
 }
 
