@@ -49,7 +49,7 @@ type SectionEntry =
   kind: "dance"
   id: string
   danceId: string
-  musicId?: string | null
+  musicIds?: string[]
   musicTracks?: MusicTrack[] // optional cache of tracks for this dance
 }
     | {
@@ -93,7 +93,8 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                   kind: "dance" as const,
                   id: sd.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
                   danceId: sd.dances?.id || sd.dance_id,
-                  musicId: sd.music_id || null,
+                  // support multiple music ids if provided, fallback to single
+                  musicIds: Array.isArray(sd.music_ids) ? sd.music_ids : (sd.music_id ? [sd.music_id] : []),
                   order_index: sd.order_index ?? 0,
                   musicTracks: dances.find(dance => dance.id === sd.dance_id)?.musicTracks ?? [],
                 }))
@@ -111,8 +112,8 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                 .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
                 .map(({ kind, id, ...rest }) => {
                   if (kind === "dance") {
-                    const { danceId, musicId, musicTracks } = rest as any
-                    return { kind, id, danceId, musicId, musicTracks } as SectionEntry
+                    const { danceId, musicIds, musicTracks } = rest as any
+                    return { kind, id, danceId, musicIds, musicTracks } as SectionEntry
                   }
                   const { content_ru, content_de, isEditing } = rest as any
                   return { kind, id, content_ru, content_de, isEditing } as SectionEntry
@@ -178,9 +179,9 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     if (current.some(e => e.kind === "dance" && e.danceId === danceId)) return
     const musicTracks = dance?.musicTracks ?? []
     // Select first available track if any exist
-    const musicId = musicTracks.length > 0 ? musicTracks[0].id : null
+    const firstId = musicTracks.length > 0 ? musicTracks[0].id : undefined
     const id = (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`)
-    updateSection(sectionIndex, "dances", [...current, { kind: "dance", id, danceId, musicId, musicTracks }])
+    updateSection(sectionIndex, "dances", [...current, { kind: "dance", id, danceId, musicIds: firstId ? [firstId] : [], musicTracks }])
   }
 
   // When selecting a dance from the selector, add it and close the panel
@@ -190,11 +191,17 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     setDanceSearch("")
   }
 
-  const updateDanceMusicInSection = (sectionIndex: number, danceIndex: number, musicId: string | null) => {
+  const updateDanceMusicInSection = (sectionIndex: number, danceIndex: number, musicId: string) => {
     const current = [...sections[sectionIndex].dances]
     const entry = current[danceIndex]
     if (entry?.kind !== "dance") return
-    current[danceIndex] = { ...entry, musicId }
+    const ids = new Set(entry.musicIds ?? [])
+    if (ids.has(musicId)) {
+      ids.delete(musicId)
+    } else {
+      ids.add(musicId)
+    }
+    current[danceIndex] = { ...entry, musicIds: Array.from(ids) }
     updateSection(sectionIndex, "dances", current)
   }
 
@@ -362,12 +369,11 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
 
     // Serialize: produce a single ordered entries array per section where each entry has an order_index
     const serializedSections = filledSections.map((s, idx) => {
-      // Build combined entries and assign sequential order_index only to kept entries
       const combinedEntries: any[] = []
       let orderCounter = 0
       for (const e of s.dances) {
         if (e.kind === "dance") {
-          combinedEntries.push({ kind: "dance", danceId: e.danceId, musicId: e.musicId ?? null, order_index: orderCounter })
+          combinedEntries.push({ kind: "dance", danceId: (e as any).danceId, musicIds: (e as any).musicIds ?? [], order_index: orderCounter })
           orderCounter++
         } else {
           const contentRu = (e as any).content_ru?.trim() ?? ""
@@ -378,12 +384,10 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
           }
         }
       }
-
-      // legacy dances array (only dances in order of appearance)
+      // legacy dances array
       const danceEntries = s.dances
-        .map(e => e.kind === "dance" ? { danceId: e.danceId, musicId: (e as any).musicId ?? null } : null)
-        .filter(Boolean) as { danceId: string; musicId?: string | null }[]
-
+        .map(e => e.kind === "dance" ? { danceId: (e as any).danceId, musicIds: (e as any).musicIds ?? [] } : null)
+        .filter(Boolean) as { danceId: string; musicIds?: string[] }[]
       return {
         id: s.id,
         name: `Section ${idx + 1}`,
@@ -638,19 +642,21 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                                   {language === "ru" ? (dances.find(d => d.id === entry.danceId)?.name_ru || dances.find(d => d.id === entry.danceId)?.name) : (dances.find(d => d.id === entry.danceId)?.name_de || dances.find(d => d.id === entry.danceId)?.name)}
                                 </div>
                                 {/* Music select visible in view mode */}
-                                <div className="mt-4">
-                                  <select
-                                    value={(entry as any).musicId || ""}
-                                    onChange={(e) => updateDanceMusicInSection(index, danceIndex, e.target.value || null)}
-                                    className="text-xs border rounded px-2 py-1 bg-background"
-                                  >
-                                    <option value="">{t("chooseLater")}</option>
-                                    {(entry.musicTracks || []).map((track) => (
-                                      <option key={track.id} value={track.id}>
-                                        {track.title}{track.artist ? ` - ${track.artist}` : ""}
-                                      </option>
-                                    ))}
-                                  </select>
+                                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {(entry.musicTracks || []).map((track) => {
+                                    const checked = (entry as any).musicIds?.includes(track.id) ?? false
+                                    return (
+                                      <label key={track.id} className="flex items-center gap-2 text-xs border rounded px-2 py-1 bg-background cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          className="accent-primary"
+                                          checked={checked}
+                                          onChange={() => updateDanceMusicInSection(index, danceIndex, track.id)}
+                                        />
+                                        <span>{track.title}{track.artist ? ` - ${track.artist}` : ""}</span>
+                                      </label>
+                                    )
+                                  })}
                                 </div>
                               </div>
                               {/* Remove button visible in view mode */}

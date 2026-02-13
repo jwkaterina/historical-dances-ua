@@ -42,13 +42,7 @@ interface SectionDance {
   id: string
   dances: Dance | null
   order_index: number
-  music_id?: string | null
-  music?: {
-    id: string
-    title: string
-    artist: string | null
-    audio_url: string | null
-  } | null
+  music_ids?: string[]
 }
 
 interface SectionText {
@@ -221,7 +215,7 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
                   id: sd.id,
                   order_index: sd.order_index,
                   dance: sd.dances,
-                  music: sd.music || null,
+                  musicIds: sd.music_ids || [],
                 }))
                 const textEntries = (section.section_texts || []).map((st: any) => ({
                   kind: 'text' as const,
@@ -262,6 +256,10 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
                                 if (!sd.dance) return null
                                 const danceNumber = combined.slice(0, entryIndex).filter((e: any) => e.kind === 'dance').length + 1
 
+                                // Resolve selected tracks via allDances cache
+                                const danceTracks = (allDances.find(d => d.id === sd.dance.id)?.musicTracks || [])
+                                const selectedTracks = danceTracks.filter(t => (sd.musicIds || []).includes(t.id))
+
                                 return (
                                   <div key={`dance-${sd.id}-${entryIndex}`} className="py-6 border-b last:border-0">
                                     <div className="flex items-center gap-4">
@@ -281,11 +279,20 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
                                         </div>
                                       </Link>
                                     </div>
-                                    {sd.music?.audio_url && (
-                                      <div className="ml-10 pt-4">
-                                        <audio controls className="w-full h-10" controlsList="nodownload" crossOrigin="anonymous" src={sd.music.audio_url}>
-                                          Your browser does not support the audio element.
-                                        </audio>
+                                    {selectedTracks.length > 0 && (
+                                      <div className="ml-10 pt-4 space-y-3">
+                                        {selectedTracks.map(track => (
+                                          <div key={track.id}>
+                                            <div className="text-xs text-muted-foreground mb-1">
+                                              {track.title}{track.artist ? ` — ${track.artist}` : ''}
+                                            </div>
+                                            {track.audio_url && (
+                                              <audio controls className="w-full h-10" controlsList="nodownload" crossOrigin="anonymous" src={track.audio_url}>
+                                                Your browser does not support the audio element.
+                                              </audio>
+                                            )}
+                                          </div>
+                                        ))}
                                       </div>
                                     )}
                                   </div>
