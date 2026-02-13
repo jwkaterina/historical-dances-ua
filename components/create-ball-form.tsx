@@ -329,6 +329,11 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
   const openTextPanel = (index: number) => {
     setPanelOpen(prev => ({ ...prev, [index]: prev[index] === 'text' ? null : 'text' }))
     setPendingText(prev => ({ ...prev, [index]: prev[index] ?? { ru: "", de: "" } }))
+    // Focus RU input on next tick
+    setTimeout(() => {
+      const el = document.getElementById(`pending-text-ru-${index}`) as HTMLInputElement | null
+      el?.focus()
+    }, 0)
   }
 
   const openDancePanel = (index: number) => {
