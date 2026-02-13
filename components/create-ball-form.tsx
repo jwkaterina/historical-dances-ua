@@ -250,23 +250,15 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
       const [moved] = next[fromSection].dances.splice(fromIndex, 1)
       next[toSection].dances.splice(toIndex, 0, moved)
 
-      // Update the indices in active/over data so subsequent events use fresh indices
-      if (active.data?.current) {
-        active.data.current.sectionIndex = toSection
-        active.data.current.danceIndex = toIndex
-      }
 
       return next
     })
   }
 
-  // Track active item for DragOverlay rendering
-  const [activeDrag, setActiveDrag] = useState<{ sectionIndex: number; danceIndex: number } | null>(null)
-
   // dnd-kit drag end handler: supports intra-section and cross-section reordering
   const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-    setActiveDrag(null)
+    // setActiveDrag(null)
     if (!over) return
 
     const fromSection = active.data?.current?.sectionIndex as number | undefined
@@ -507,13 +499,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
 
           {editOrder ? (
             // Edit mode: DnD enabled, handles visible, editing controls hidden
-            <DndContext onDragOver={onDragOver} onDragStart={(event) => {
-              const fromSection = event.active.data?.current?.sectionIndex as number | undefined
-              const fromIndex = event.active.data?.current?.danceIndex as number | undefined
-              if (fromSection !== undefined && fromIndex !== undefined) {
-                setActiveDrag({ sectionIndex: fromSection, danceIndex: fromIndex })
-              }
-            }} onDragEnd={onDragEnd} sensors={sensors}>
+            <DndContext onDragOver={onDragOver} onDragEnd={onDragEnd} sensors={sensors}>
               <div className="space-y-4">
                 {sections.map((section, index) => (
                   <div key={index} className="border rounded-lg p-3 sm:p-4 space-y-3">
