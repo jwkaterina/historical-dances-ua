@@ -36,6 +36,11 @@ interface MusicEntry {
   audio_url?: string
 }
 
+interface VideoEntry {
+  video_type: 'youtube' | 'uploaded'
+  url: string
+}
+
 export function CreateDanceForm() {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -56,15 +61,17 @@ export function CreateDanceForm() {
   
   // Common fields
   const [difficulty, setDifficulty] = useState("")
-  const [youtubeUrl, setYoutubeUrl] = useState("")
-  const [videoFile, setVideoFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [origin, setOrigin] = useState("") // Declared the missing variable
-  
+  const [origin, setOrigin] = useState("")
+
   const [musicEntries, setMusicEntries] = useState<MusicEntry[]>([
     { title: "", artist: "", tempo: "", genre: "", audio_url: "" }
   ])
   const [musicAudioFiles, setMusicAudioFiles] = useState<Record<number, File | null>>({})
+
+  // Video entries state
+  const [videoEntries, setVideoEntries] = useState<VideoEntry[]>([])
+  const [videoFiles, setVideoFiles] = useState<Record<number, File | null>>({})
 
   // Check if we need to show title fields (more than 1 track)
   const showTitleFields = musicEntries.length > 1
@@ -89,6 +96,24 @@ export function CreateDanceForm() {
     const updated = [...musicEntries]
     updated[index][field] = value
     setMusicEntries(updated)
+  }
+
+  // Video entry functions
+  const addVideoEntry = (type: 'youtube' | 'uploaded') => {
+    setVideoEntries([...videoEntries, { video_type: type, url: "" }])
+  }
+
+  const removeVideoEntry = (index: number) => {
+    setVideoEntries(videoEntries.filter((_, i) => i !== index))
+    const newVideoFiles = { ...videoFiles }
+    delete newVideoFiles[index]
+    setVideoFiles(newVideoFiles)
+  }
+
+  const updateVideoEntry = (index: number, url: string) => {
+    const updated = [...videoEntries]
+    updated[index].url = url
+    setVideoEntries(updated)
   }
 
   const handleVideoUpload = async (file: File): Promise<string | null> => {
@@ -190,10 +215,10 @@ export function CreateDanceForm() {
     setSchemeRu("")
     setDifficulty("")
     setOrigin("")
-    setYoutubeUrl("")
-    setVideoFile(null)
     setMusicEntries([{ title: "", artist: "", tempo: "", genre: "", audio_url: "" }])
     setMusicAudioFiles({})
+    setVideoEntries([])
+    setVideoFiles({})
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -229,15 +254,6 @@ export function CreateDanceForm() {
     try {
       const supabase = createClient()
 
-      // Upload video file if present
-      let finalVideoUrl = ""
-      if (videoFile) {
-        const uploadedUrl = await handleVideoUpload(videoFile)
-        if (uploadedUrl) {
-          finalVideoUrl = uploadedUrl
-        }
-      }
-
       // Use German name as the base name
       const { data: dance, error: danceError } = await supabase
         .from("dances")
@@ -252,14 +268,40 @@ export function CreateDanceForm() {
           scheme_de: schemeDe || null,
           scheme_ru: schemeRu || null,
           difficulty: difficulty || null,
-          youtube_url: youtubeUrl || null,
-          video_url: finalVideoUrl || null,
-          origin: origin || null // Added origin field
+          origin: origin || null
         })
         .select()
         .single()
 
       if (danceError) throw danceError
+
+      // Process and insert video entries
+      for (let i = 0; i < videoEntries.length; i++) {
+        const video = videoEntries[i]
+        let url = video.url
+
+        // Upload file if needed
+        if (video.video_type === 'uploaded' && videoFiles[i]) {
+          const uploadedUrl = await handleVideoUpload(videoFiles[i]!)
+          if (uploadedUrl) {
+            url = uploadedUrl
+          }
+        }
+
+        // Only insert if URL is valid
+        if (url && url.trim() !== '') {
+          const { error: videoError } = await supabase
+            .from("dance_videos")
+            .insert({
+              dance_id: dance.id,
+              video_type: video.video_type,
+              url: url,
+              order_index: i,
+            })
+
+          if (videoError) throw videoError
+        }
+      }
 
       // Upload audio files for music entries
       const musicEntriesWithAudio = await Promise.all(
@@ -391,29 +433,119 @@ export function CreateDanceForm() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="youtubeUrl">{t("youtubeUrl")}</Label>
-                <Input id="youtubeUrl" type="url" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder={t("youtubePlaceholder")} />
-              </div>
+            </div>
 
-              <div className="space-y-2 sm:col-span-2">
-                <Label>{t("videoFile")}</Label>
-                {videoFile ? (
-                  <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
-                    <span className="text-sm text-foreground truncate flex-1">{videoFile.name}</span>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setVideoFile(null)}>
-                      <X className="h-4 w-4" />
+            <div className="space-y-4">
+              <h3 className="font-medium text-foreground">{t("videoFile")}</h3>
+
+              {videoEntries.map((video, index) => (
+                <div key={index} className="space-y-3 rounded-lg border border-border p-3 sm:p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      {video.video_type === 'youtube' ? 'YouTube' : t("videoFile")} {index + 1}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeVideoEntry(index)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Input id="videoFile" type="file" accept="video/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) setVideoFile(file) }} className="hidden" />
-                    <Button type="button" variant="outline" onClick={() => document.getElementById("videoFile")?.click()} className="w-full">
-                      <Upload className="mr-2 h-4 w-4" />
-                      {t("selectVideo")}
-                    </Button>
-                  </div>
-                )}
+
+                  {video.video_type === 'youtube' ? (
+                    <div className="space-y-2">
+                      <Label>{t("youtubeUrl")}</Label>
+                      <Input
+                        type="url"
+                        value={video.url}
+                        onChange={(e) => updateVideoEntry(index, e.target.value)}
+                        placeholder={t("youtubePlaceholder")}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>{t("videoFile")}</Label>
+                      {videoFiles[index] ? (
+                        <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+                          <span className="text-sm text-foreground truncate flex-1">
+                            {videoFiles[index]?.name}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const newFiles = { ...videoFiles }
+                              delete newFiles[index]
+                              setVideoFiles(newFiles)
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id={`create-video-file-${index}`}
+                            type="file"
+                            accept="video/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                const MAX_SIZE = 100 * 1024 * 1024
+                                if (file.size > MAX_SIZE) {
+                                  toast({
+                                    title: t("toastError"),
+                                    description: t("toastVideoTooLarge"),
+                                    variant: "destructive",
+                                  })
+                                  e.target.value = ""
+                                  return
+                                }
+                                setVideoFiles({ ...videoFiles, [index]: file })
+                              }
+                            }}
+                            className="hidden"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => document.getElementById(`create-video-file-${index}`)?.click()}
+                            className="w-full"
+                          >
+                            <Upload className="mr-2 h-4 w-4" />
+                            {t("selectVideo")}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addVideoEntry('youtube')}
+                  className="flex-1 bg-transparent"
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  {t("addYoutubeVideo")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addVideoEntry('uploaded')}
+                  className="flex-1 bg-transparent"
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  {t("addVideoFile")}
+                </Button>
               </div>
             </div>
 

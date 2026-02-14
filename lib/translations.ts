@@ -42,6 +42,8 @@ export const translations = {
     selectVideo: "Video auswählen",
     videoUrlAlt: "Oder Video-URL eingeben",
     uploading: "Wird hochgeladen...",
+    addYoutubeVideo: "YouTube-Video hinzufügen",
+    addVideoFile: "Videodatei hinzufügen",
     
     // Forms
     createDance: "Tanz erstellen",
@@ -256,6 +258,8 @@ export const translations = {
     selectVideo: "Выбрать видео",
     videoUrlAlt: "Или введите URL видео",
     uploading: "Загрузка...",
+    addYoutubeVideo: "Добавить YouTube видео",
+    addVideoFile: "Добавить видеофайл",
     
     // Forms
     createDance: "Создать танец",

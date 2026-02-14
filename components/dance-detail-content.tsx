@@ -43,14 +43,22 @@ interface MusicEntry {
   genre: string
 }
 
+interface VideoEntry {
+  id: string
+  video_type: 'youtube' | 'uploaded'
+  url: string
+}
+
 interface DanceDetailContentProps {
   dance: Dance
   musicTracks: MusicTrack[]
   musicForEdit: MusicEntry[]
+  videos: VideoEntry[]
+  videosForEdit: VideoEntry[]
   ballId?: string
 }
 
-export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }: DanceDetailContentProps) {
+export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, videosForEdit, ballId }: DanceDetailContentProps) {
   const { t, language } = useLanguage()
 
   // Get localized content
@@ -112,7 +120,7 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }:
           </div>
           <div className="flex w-full gap-2 sm:justify-end">
             <div className="flex-1 sm:flex-none">
-              <EditDanceForm dance={dance} musicTracks={musicForEdit} />
+              <EditDanceForm dance={dance} musicTracks={musicForEdit} videoEntries={videosForEdit} />
             </div>
             <div className="flex-1 sm:flex-none">
               <DeleteDanceButton danceId={dance.id} danceName={displayName} />
@@ -124,50 +132,53 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }:
         )}
       </div>
 
-      {dance.youtube_url && (() => {
-        // Extract YouTube video ID from various URL formats
-        const getYouTubeId = (url: string): string | null => {
-          const patterns = [
-            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-            /youtube\.com\/v\/([^&\n?#]+)/,
-          ]
-          for (const pattern of patterns) {
-            const match = url.match(pattern)
-            if (match) return match[1]
+      {videos.map((video, index) => {
+        if (video.video_type === 'youtube') {
+          // Extract YouTube video ID from various URL formats
+          const getYouTubeId = (url: string): string | null => {
+            const patterns = [
+              /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+              /youtube\.com\/v\/([^&\n?#]+)/,
+            ]
+            for (const pattern of patterns) {
+              const match = url.match(pattern)
+              if (match) return match[1]
+            }
+            return null
           }
-          return null
-        }
-        const videoId = getYouTubeId(dance.youtube_url)
-        return videoId ? (
-          <div className="mb-8">
-            <div className="aspect-video w-full max-w-3xl rounded-lg overflow-hidden border">
-              <iframe
-                src={`https://www.youtube.com/embed/${videoId}`}
-                title="YouTube video player"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full"
-              />
+          const videoId = getYouTubeId(video.url)
+          return videoId ? (
+            <div key={video.id} className="mb-8">
+              <div className="aspect-video w-full max-w-3xl rounded-lg overflow-hidden border">
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoId}`}
+                  title="YouTube video player"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
             </div>
-          </div>
-        ) : null
-      })()}
-
-      {dance.video_url && (
-        <div className="mb-8">
-          <div className="aspect-video w-full max-w-3xl rounded-lg overflow-hidden border bg-black">
-            <video
-              src={dance.video_url}
-              controls
-              className="w-full h-full"
-              controlsList="nodownload"
-              playsInline
-            >
-              Your browser does not support the video element.
-            </video>
-          </div>
-        </div>
-      )}
+          ) : null
+        } else if (video.video_type === 'uploaded') {
+          return (
+            <div key={video.id} className="mb-8">
+              <div className="aspect-video w-full max-w-3xl rounded-lg overflow-hidden border bg-black">
+                <video
+                  src={video.url}
+                  controls
+                  className="w-full h-full"
+                  controlsList="nodownload"
+                  playsInline
+                >
+                  Your browser does not support the video element.
+                </video>
+              </div>
+            </div>
+          )
+        }
+        return null
+      })}
 
       {displayDescription && (
         <Card className="mb-8">

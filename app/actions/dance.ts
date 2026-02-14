@@ -16,8 +16,6 @@ interface UpdateDanceData {
   scheme_ru: string | null
   difficulty: string | null
   origin: string | null
-  youtube_url: string | null
-  video_url: string | null
 }
 
 interface MusicEntry {
@@ -27,6 +25,12 @@ interface MusicEntry {
   tempo: string
   genre: string
   audio_url?: string
+}
+
+interface VideoEntry {
+  id?: string
+  video_type: 'youtube' | 'uploaded'
+  url: string
 }
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
@@ -49,7 +53,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
   throw lastError
 }
 
-export async function updateDance(danceData: UpdateDanceData, musicEntries: MusicEntry[]) {
+export async function updateDance(danceData: UpdateDanceData, musicEntries: MusicEntry[], videoEntries: VideoEntry[]) {
   try {
     // Verify service role key is available
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -76,8 +80,6 @@ export async function updateDance(danceData: UpdateDanceData, musicEntries: Musi
           scheme_ru: danceData.scheme_ru,
           difficulty: danceData.difficulty,
           origin: danceData.origin,
-          youtube_url: danceData.youtube_url,
-          video_url: danceData.video_url,
         })
         .eq('id', danceData.id)
 
@@ -88,6 +90,76 @@ export async function updateDance(danceData: UpdateDanceData, musicEntries: Musi
 
       console.log('[v0] Dance updated successfully on server for ID:', danceData.id)
     })
+
+    // Sync dance videos
+    console.log('[v0] Syncing dance videos for ID:', danceData.id)
+    await withRetry(async () => {
+      // Fetch existing video entries
+      const { data: existingVideos, error: fetchVideosError } = await supabase
+        .from('dance_videos')
+        .select('id')
+        .eq('dance_id', danceData.id)
+
+      if (fetchVideosError) {
+        console.error('[v0] Fetch current videos error:', fetchVideosError)
+        throw new Error(`Failed to fetch current videos: ${fetchVideosError.message}`)
+      }
+
+      const existingVideoIds = new Set<string>((existingVideos || []).map((v: any) => v.id))
+      const submittedVideoIds = new Set<string>(videoEntries.map(v => v.id).filter(Boolean) as string[])
+
+      // Delete videos that are not in the submitted set
+      const toDelete = Array.from(existingVideoIds).filter(id => !submittedVideoIds.has(id))
+      if (toDelete.length > 0) {
+        const { error: deleteVideoError } = await supabase
+          .from('dance_videos')
+          .delete()
+          .in('id', toDelete)
+        if (deleteVideoError) {
+          console.error('[v0] Delete obsolete videos error:', deleteVideoError)
+          throw new Error(`Failed to delete obsolete videos: ${deleteVideoError.message}`)
+        }
+        console.log('[v0] Deleted', toDelete.length, 'obsolete dance videos')
+      }
+    })
+
+    // Update or insert video entries
+    for (let i = 0; i < videoEntries.length; i++) {
+      const video = videoEntries[i]
+      await withRetry(async () => {
+        if (video.id) {
+          // Update existing video
+          const { error: updateError } = await supabase
+            .from('dance_videos')
+            .update({
+              video_type: video.video_type,
+              url: video.url,
+              order_index: i,
+            })
+            .eq('id', video.id)
+          if (updateError) {
+            console.error('[v0] Update video error:', updateError)
+            throw new Error(`Failed to update video: ${updateError.message}`)
+          }
+          console.log('[v0] Updated video ID:', video.id)
+        } else {
+          // Insert new video
+          const { error: insertError } = await supabase
+            .from('dance_videos')
+            .insert({
+              dance_id: danceData.id,
+              video_type: video.video_type,
+              url: video.url,
+              order_index: i,
+            })
+          if (insertError) {
+            console.error('[v0] Insert video error:', insertError)
+            throw new Error(`Failed to insert video: ${insertError.message}`)
+          }
+          console.log('[v0] Inserted new video')
+        }
+      })
+    }
 
     // Handle music entries - only save tracks that have audio files
     const validMusic = musicEntries.filter((m) => m.audio_url && m.audio_url.trim() !== '')

@@ -56,14 +56,30 @@ export default async function DanceDetailPage({ params, searchParams }: PageProp
     audio_url: track.audio_url || "",
   }))
 
+  // Fetch dance videos
+  const { data: danceVideos } = await supabase
+    .from("dance_videos")
+    .select("id, video_type, url, order_index")
+    .eq("dance_id", id)
+    .order("order_index", { ascending: true })
+
+  // Transform videos for edit form
+  const videosForEdit = (danceVideos || []).map((video: any) => ({
+    id: video.id,
+    video_type: video.video_type,
+    url: video.url,
+  }))
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <DanceDetailContent 
-          dance={dance} 
-          musicTracks={musicTracks} 
+        <DanceDetailContent
+          dance={dance}
+          musicTracks={musicTracks}
           musicForEdit={musicForEdit}
+          videos={danceVideos || []}
+          videosForEdit={videosForEdit}
           ballId={ballId}
         />
       </main>
