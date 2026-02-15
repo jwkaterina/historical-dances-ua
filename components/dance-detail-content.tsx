@@ -1,13 +1,12 @@
 "use client"
 
+import React, { useState } from "react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { EditDanceForm } from "@/components/edit-dance-form"
 import { DeleteDanceButton } from "@/components/delete-dance-button"
 import { useLanguage } from "@/components/language-provider"
-import { ExternalLink } from "lucide-react"
 
 interface Dance {
   id: string
@@ -43,14 +42,26 @@ interface MusicEntry {
   genre: string
 }
 
+interface VideoEntry {
+  id: string
+  video_type: 'youtube' | 'uploaded'
+  url: string
+}
+
+interface FigureVideoEntry { id: string; video_type: 'youtube'|'uploaded'; url: string }
+interface FigureEntry { id: string; order_index: number; scheme_de?: string | null; scheme_ru?: string | null; videos: FigureVideoEntry[] }
+
 interface DanceDetailContentProps {
   dance: Dance
   musicTracks: MusicTrack[]
   musicForEdit: MusicEntry[]
+  videos: VideoEntry[]
+  videosForEdit: VideoEntry[]
   ballId?: string
+  figures?: FigureEntry[]
 }
 
-export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }: DanceDetailContentProps) {
+export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, videosForEdit, ballId, figures = [] }: DanceDetailContentProps) {
   const { t, language } = useLanguage()
 
   // Get localized content
@@ -77,6 +88,10 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }:
     }
     return difficultyMap[difficulty] || difficulty
   }
+
+  // Collapse state per figure (client component already)
+  const [openFigures, setOpenFigures] = useState<Record<string, boolean>>({})
+  const toggleFigure = (id: string) => setOpenFigures(prev => ({ ...prev, [id]: !prev[id] }))
 
   return (
     <>
@@ -112,7 +127,17 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }:
           </div>
           <div className="flex w-full gap-2 sm:justify-end">
             <div className="flex-1 sm:flex-none">
-              <EditDanceForm dance={dance} musicTracks={musicForEdit} />
+              <EditDanceForm
+                dance={dance}
+                musicTracks={musicForEdit}
+                videoEntries={videosForEdit}
+                figureEntries={figures.map(f => ({
+                  id: f.id,
+                  scheme_de: f.scheme_de || '',
+                  scheme_ru: f.scheme_ru || '',
+                  videos: f.videos.map(v => ({ id: v.id, video_type: v.video_type, url: v.url }))
+                }))}
+              />
             </div>
             <div className="flex-1 sm:flex-none">
               <DeleteDanceButton danceId={dance.id} danceName={displayName} />
@@ -124,50 +149,53 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }:
         )}
       </div>
 
-      {dance.youtube_url && (() => {
-        // Extract YouTube video ID from various URL formats
-        const getYouTubeId = (url: string): string | null => {
-          const patterns = [
-            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-            /youtube\.com\/v\/([^&\n?#]+)/,
-          ]
-          for (const pattern of patterns) {
-            const match = url.match(pattern)
-            if (match) return match[1]
+      {videos.map((video) => {
+        if (video.video_type === 'youtube') {
+          // Extract YouTube video ID from various URL formats
+          const getYouTubeId = (url: string): string | null => {
+            const patterns = [
+              /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+              /youtube\.com\/v\/([^&\n?#]+)/,
+            ]
+            for (const pattern of patterns) {
+              const match = url.match(pattern)
+              if (match) return match[1]
+            }
+            return null
           }
-          return null
-        }
-        const videoId = getYouTubeId(dance.youtube_url)
-        return videoId ? (
-          <div className="mb-8">
-            <div className="aspect-video w-full max-w-3xl rounded-lg overflow-hidden border">
-              <iframe
-                src={`https://www.youtube.com/embed/${videoId}`}
-                title="YouTube video player"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full"
-              />
+          const videoId = getYouTubeId(video.url)
+          return videoId ? (
+            <div key={video.id} className="mb-8">
+              <div className="aspect-video w-full max-w-3xl rounded-lg overflow-hidden border">
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoId}`}
+                  title="YouTube video player"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
             </div>
-          </div>
-        ) : null
-      })()}
-
-      {dance.video_url && (
-        <div className="mb-8">
-          <div className="aspect-video w-full max-w-3xl rounded-lg overflow-hidden border bg-black">
-            <video
-              src={dance.video_url}
-              controls
-              className="w-full h-full"
-              controlsList="nodownload"
-              playsInline
-            >
-              Your browser does not support the video element.
-            </video>
-          </div>
-        </div>
-      )}
+          ) : null
+        } else if (video.video_type === 'uploaded') {
+          return (
+            <div key={video.id} className="mb-8">
+              <div className="aspect-video w-full max-w-3xl rounded-lg overflow-hidden border bg-black">
+                <video
+                  src={video.url}
+                  controls
+                  className="w-full h-full"
+                  controlsList="nodownload"
+                  playsInline
+                >
+                  Your browser does not support the video element.
+                </video>
+              </div>
+            </div>
+          )
+        }
+        return null
+      })}
 
       {displayDescription && (
         <Card className="mb-8">
@@ -195,59 +223,113 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, ballId }:
         </Card>
       )}
 
+      {figures.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-lg">{t('figures')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {figures.sort((a,b)=>a.order_index-b.order_index).map((fig) => {
+                const schemeText = language === 'ru' ? (fig.scheme_ru || '') : (fig.scheme_de || '')
+                const isOpen = openFigures[fig.id] || false
+                return (
+                  <div key={fig.id} className="border rounded-md">
+                    <button type="button" className="w-full flex items-center justify-between px-3 py-2 text-left" onClick={() => toggleFigure(fig.id)}>
+                      <span className="font-medium">{t('figure')} #{fig.order_index + 1}</span>
+                      <span className="text-muted-foreground text-sm">{isOpen ? '−' : '+'}</span>
+                    </button>
+                    {isOpen && (
+                      <div className="px-3 pb-3 space-y-3">
+                        {schemeText && (
+                          <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-mono bg-muted p-3 rounded-md">{schemeText}</pre>
+                        )}
+                        {fig.videos.map(v => {
+                          if (v.video_type === 'youtube') {
+                            const getYouTubeId = (url: string): string | null => {
+                              const patterns = [/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,/youtube\.com\/v\/([^&\n?#]+)/]
+                              for (const pattern of patterns) { const match = url.match(pattern); if (match) return match[1] }
+                              return null
+                            }
+                            const vid = getYouTubeId(v.url)
+                            return vid ? (
+                              <div key={v.id} className="aspect-video w-full max-w-3xl rounded-lg overflow-hidden border">
+                                <iframe src={`https://www.youtube.com/embed/${vid}`} title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="w-full h-full" />
+                              </div>
+                            ) : null
+                          }
+                          return (
+                            <div key={v.id} className="aspect-video w-full max-w-3xl rounded-lg overflow-hidden border bg-black">
+                              <video src={v.url} controls className="w-full h-full" controlsList="nodownload" playsInline>
+                                Your browser does not support the video element.
+                              </video>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">{t("associatedMusic")}</CardTitle>
         </CardHeader>
         <CardContent>
           {musicTracks.length > 0 ? (
-            <ul className="space-y-4">
-              {musicTracks.map((track) => (
-                <li
-                  key={track.id}
-                  className="p-4 bg-muted rounded-md"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">{track.title}</p>
-                      {track.artist && (
-                        <p className="text-sm text-muted-foreground">
-                          {track.artist}
-                        </p>
+              <ul className="space-y-4">
+                {musicTracks.map((track) => (
+                    <li
+                        key={track.id}
+                        className="p-4 bg-muted rounded-md"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">{track.title}</p>
+                          {track.artist && (
+                              <p className="text-sm text-muted-foreground">
+                                {track.artist}
+                              </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          {track.tempo && <span>{track.tempo} BPM</span>}
+                          {track.genre && <Badge variant="outline">{track.genre}</Badge>}
+                        </div>
+                      </div>
+                      {track.audio_url && (
+                          <div className="mt-3" key={`audio-${track.id}`}>
+                            <audio
+                                key={`audio-player-${track.id}`}
+                                controls
+                                className="w-full"
+                                controlsList="nodownload"
+                                crossOrigin="anonymous"
+                                src={track.audio_url}
+                                style={{ minHeight: '40px' }}
+                                onCanPlay={() => console.log("[v0] Audio can play:", track.audio_url)}
+                                onError={(e) => console.log("[v0] Audio error:", track.audio_url, e.currentTarget.error)}
+                            >
+                              Your browser does not support the audio element.
+                            </audio>
+                          </div>
                       )}
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      {track.tempo && <span>{track.tempo} BPM</span>}
-                      {track.genre && <Badge variant="outline">{track.genre}</Badge>}
-                    </div>
-                  </div>
-                  {track.audio_url && (
-                    <div className="mt-3" key={`audio-${track.id}`}>
-                      <audio
-                        key={`audio-player-${track.id}`}
-                        controls
-                        className="w-full"
-                        controlsList="nodownload"
-                        crossOrigin="anonymous"
-                        src={track.audio_url}
-                        style={{ minHeight: '40px' }}
-                        onCanPlay={() => console.log("[v0] Audio can play:", track.audio_url)}
-                        onError={(e) => console.log("[v0] Audio error:", track.audio_url, e.currentTarget.error)}
-                      >
-                        Your browser does not support the audio element.
-                      </audio>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+                    </li>
+                ))}
+              </ul>
           ) : (
-            <p className="text-muted-foreground">
-              {t("noMusicAssociated")}
-            </p>
+              <p className="text-muted-foreground">
+                {t("noMusicAssociated")}
+              </p>
           )}
         </CardContent>
       </Card>
+
     </>
   )
 }

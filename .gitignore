@@ -5,6 +5,8 @@ __v0_jsx-dev-runtime.ts
 instrumentation-client.js
 instrumentation-client.ts
 
+index.md
+
 # Common ignores
 node_modules/
 .next/

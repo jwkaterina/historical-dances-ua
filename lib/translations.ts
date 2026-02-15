@@ -42,6 +42,8 @@ export const translations = {
     selectVideo: "Video auswählen",
     videoUrlAlt: "Oder Video-URL eingeben",
     uploading: "Wird hochgeladen...",
+    addYoutubeVideo: "YouTube-Video hinzufügen",
+    addVideoFile: "Videodatei hinzufügen",
     
     // Forms
     createDance: "Tanz erstellen",
@@ -122,6 +124,9 @@ export const translations = {
     videoUrl: "Video/Schema URL",
     videoPlaceholder: "https://example.com/video.mp4",
     dropHereToAddAtEnd: "Hierher ziehen, um am Ende hinzuzufügen",
+    figures: "Figuren",
+    figure: "Figur",
+    addFigure: "Figur hinzufügen",
     loading: "Lädt...",
     chooseLater: "Später auswählen",
     editOrder: "Reihenfolge bearbeiten",
@@ -256,6 +261,8 @@ export const translations = {
     selectVideo: "Выбрать видео",
     videoUrlAlt: "Или введите URL видео",
     uploading: "Загрузка...",
+    addYoutubeVideo: "Добавить YouTube видео",
+    addVideoFile: "Добавить видеофайл",
     
     // Forms
     createDance: "Создать танец",
@@ -334,6 +341,9 @@ export const translations = {
     videoUrl: "URL видео/схемы",
     videoPlaceholder: "https://example.com/video.mp4",
     dropHereToAddAtEnd: "Перетащите сюда, чтобы добавить в конец",
+    figures: "Фигуры",
+    figure: "Фигура",
+    addFigure: "Добавить фигуру",
     loading: "Загрузка...",
     chooseLater: "Выбрать позже",
     editOrder: "Редактировать порядок",

@@ -16,8 +16,6 @@ interface UpdateDanceData {
   scheme_ru: string | null
   difficulty: string | null
   origin: string | null
-  youtube_url: string | null
-  video_url: string | null
 }
 
 interface MusicEntry {
@@ -27,6 +25,25 @@ interface MusicEntry {
   tempo: string
   genre: string
   audio_url?: string
+}
+
+interface VideoEntry {
+  id?: string
+  video_type: 'youtube' | 'uploaded'
+  url: string
+}
+
+interface FigureVideoEntry {
+  id?: string
+  video_type: 'youtube' | 'uploaded'
+  url: string
+}
+
+interface FigureEntry {
+  id?: string
+  scheme_de: string | null
+  scheme_ru: string | null
+  videos: FigureVideoEntry[]
 }
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
@@ -49,7 +66,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
   throw lastError
 }
 
-export async function updateDance(danceData: UpdateDanceData, musicEntries: MusicEntry[]) {
+export async function updateDance(danceData: UpdateDanceData, musicEntries: MusicEntry[], videoEntries: VideoEntry[], figureEntries: FigureEntry[] = []) {
   try {
     // Verify service role key is available
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -76,8 +93,6 @@ export async function updateDance(danceData: UpdateDanceData, musicEntries: Musi
           scheme_ru: danceData.scheme_ru,
           difficulty: danceData.difficulty,
           origin: danceData.origin,
-          youtube_url: danceData.youtube_url,
-          video_url: danceData.video_url,
         })
         .eq('id', danceData.id)
 
@@ -88,6 +103,222 @@ export async function updateDance(danceData: UpdateDanceData, musicEntries: Musi
 
       console.log('[v0] Dance updated successfully on server for ID:', danceData.id)
     })
+
+    // Sync dance videos
+    console.log('[v0] Syncing dance videos for ID:', danceData.id)
+    await withRetry(async () => {
+      // Fetch existing video entries
+      const { data: existingVideos, error: fetchVideosError } = await supabase
+        .from('dance_videos')
+        .select('id')
+        .eq('dance_id', danceData.id)
+
+      if (fetchVideosError) {
+        console.error('[v0] Fetch current videos error:', fetchVideosError)
+        throw new Error(`Failed to fetch current videos: ${fetchVideosError.message}`)
+      }
+
+      const existingVideoIds = new Set<string>((existingVideos || []).map((v: any) => v.id))
+      const submittedVideoIds = new Set<string>(videoEntries.map(v => v.id).filter(Boolean) as string[])
+
+      // Delete videos that are not in the submitted set
+      const toDelete = Array.from(existingVideoIds).filter(id => !submittedVideoIds.has(id))
+      if (toDelete.length > 0) {
+        const { error: deleteVideoError } = await supabase
+          .from('dance_videos')
+          .delete()
+          .in('id', toDelete)
+        if (deleteVideoError) {
+          console.error('[v0] Delete obsolete videos error:', deleteVideoError)
+          throw new Error(`Failed to delete obsolete videos: ${deleteVideoError.message}`)
+        }
+        console.log('[v0] Deleted', toDelete.length, 'obsolete dance videos')
+      }
+    })
+
+    // Update or insert video entries
+    for (let i = 0; i < videoEntries.length; i++) {
+      const video = videoEntries[i]
+      await withRetry(async () => {
+        if (video.id) {
+          // Update existing video
+          const { error: updateError } = await supabase
+            .from('dance_videos')
+            .update({
+              video_type: video.video_type,
+              url: video.url,
+              order_index: i,
+            })
+            .eq('id', video.id)
+          if (updateError) {
+            console.error('[v0] Update video error:', updateError)
+            throw new Error(`Failed to update video: ${updateError.message}`)
+          }
+          console.log('[v0] Updated video ID:', video.id)
+        } else {
+          // Insert new video
+          const { error: insertError } = await supabase
+            .from('dance_videos')
+            .insert({
+              dance_id: danceData.id,
+              video_type: video.video_type,
+              url: video.url,
+              order_index: i,
+            })
+          if (insertError) {
+            console.error('[v0] Insert video error:', insertError)
+            throw new Error(`Failed to insert video: ${insertError.message}`)
+          }
+          console.log('[v0] Inserted new video')
+        }
+      })
+    }
+
+    // Sync dance figures
+    console.log('[v0] Syncing dance figures for ID:', danceData.id)
+    await withRetry(async () => {
+      // Fetch existing figures
+      const { data: existingFigures, error: fetchFiguresError } = await supabase
+        .from('dance_figures')
+        .select('id')
+        .eq('dance_id', danceData.id)
+
+      if (fetchFiguresError) {
+        console.error('[v0] Fetch current figures error:', fetchFiguresError)
+        throw new Error(`Failed to fetch current figures: ${fetchFiguresError.message}`)
+      }
+
+      const existingFigureIds = new Set<string>((existingFigures || []).map((f: any) => f.id))
+      const submittedFigureIds = new Set<string>(figureEntries.map(f => f.id).filter(Boolean) as string[])
+
+      // Delete figures that are not in the submitted set (CASCADE will delete their videos)
+      const toDelete = Array.from(existingFigureIds).filter(id => !submittedFigureIds.has(id))
+      if (toDelete.length > 0) {
+        const { error: deleteFigureError } = await supabase
+          .from('dance_figures')
+          .delete()
+          .in('id', toDelete)
+        if (deleteFigureError) {
+          console.error('[v0] Delete obsolete figures error:', deleteFigureError)
+          throw new Error(`Failed to delete obsolete figures: ${deleteFigureError.message}`)
+        }
+        console.log('[v0] Deleted', toDelete.length, 'obsolete dance figures')
+      }
+    })
+
+    // Update or insert figure entries
+    for (let i = 0; i < figureEntries.length; i++) {
+      const figure = figureEntries[i]
+      let figureId = figure.id
+
+      await withRetry(async () => {
+        if (figureId) {
+          // Update existing figure
+          const { error: updateError } = await supabase
+            .from('dance_figures')
+            .update({
+              scheme_de: figure.scheme_de,
+              scheme_ru: figure.scheme_ru,
+              order_index: i,
+            })
+            .eq('id', figureId)
+          if (updateError) {
+            console.error('[v0] Update figure error:', updateError)
+            throw new Error(`Failed to update figure: ${updateError.message}`)
+          }
+          console.log('[v0] Updated figure ID:', figureId)
+        } else {
+          // Insert new figure
+          const { data: newFigure, error: insertError } = await supabase
+            .from('dance_figures')
+            .insert({
+              dance_id: danceData.id,
+              scheme_de: figure.scheme_de,
+              scheme_ru: figure.scheme_ru,
+              order_index: i,
+            })
+            .select()
+            .single()
+          if (insertError) {
+            console.error('[v0] Insert figure error:', insertError)
+            throw new Error(`Failed to insert figure: ${insertError.message}`)
+          }
+          figureId = newFigure.id
+          console.log('[v0] Inserted new figure with ID:', figureId)
+        }
+      })
+
+      // Sync figure videos
+      if (figureId) {
+        await withRetry(async () => {
+          // Fetch existing videos for this figure
+          const { data: existingVideos, error: fetchVideosError } = await supabase
+            .from('figure_videos')
+            .select('id')
+            .eq('figure_id', figureId)
+
+          if (fetchVideosError) {
+            console.error('[v0] Fetch figure videos error:', fetchVideosError)
+            throw new Error(`Failed to fetch figure videos: ${fetchVideosError.message}`)
+          }
+
+          const existingVideoIds = new Set<string>((existingVideos || []).map((v: any) => v.id))
+          const submittedVideoIds = new Set<string>(figure.videos.map(v => v.id).filter(Boolean) as string[])
+
+          // Delete videos that are not in the submitted set
+          const toDeleteVideos = Array.from(existingVideoIds).filter(id => !submittedVideoIds.has(id))
+          if (toDeleteVideos.length > 0) {
+            const { error: deleteVideoError } = await supabase
+              .from('figure_videos')
+              .delete()
+              .in('id', toDeleteVideos)
+            if (deleteVideoError) {
+              console.error('[v0] Delete obsolete figure videos error:', deleteVideoError)
+              throw new Error(`Failed to delete obsolete figure videos: ${deleteVideoError.message}`)
+            }
+            console.log('[v0] Deleted', toDeleteVideos.length, 'obsolete figure videos')
+          }
+        })
+
+        // Update or insert figure video entries
+        for (let j = 0; j < figure.videos.length; j++) {
+          const video = figure.videos[j]
+          await withRetry(async () => {
+            if (video.id) {
+              // Update existing video
+              const { error: updateError } = await supabase
+                .from('figure_videos')
+                .update({
+                  video_type: video.video_type,
+                  url: video.url,
+                  order_index: j,
+                })
+                .eq('id', video.id)
+              if (updateError) {
+                console.error('[v0] Update figure video error:', updateError)
+                throw new Error(`Failed to update figure video: ${updateError.message}`)
+              }
+              console.log('[v0] Updated figure video ID:', video.id)
+            } else {
+              // Insert new video
+              const { error: insertError } = await supabase
+                .from('figure_videos')
+                .insert({
+                  figure_id: figureId,
+                  video_type: video.video_type,
+                  url: video.url,
+                  order_index: j,
+                })
+              if (insertError) {
+                console.error('[v0] Insert figure video error:', insertError)
+                throw new Error(`Failed to insert figure video: ${insertError.message}`)
+              }
+              console.log('[v0] Inserted new figure video')
+            }
+          })
+        }
+      }
+    }
 
     // Handle music entries - only save tracks that have audio files
     const validMusic = musicEntries.filter((m) => m.audio_url && m.audio_url.trim() !== '')

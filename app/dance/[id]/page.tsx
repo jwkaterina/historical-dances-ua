@@ -43,8 +43,8 @@ export default async function DanceDetailPage({ params, searchParams }: PageProp
     .eq("dance_id", id)
 
   // Get all music tracks and filter to only those with audio files
-  const allMusicTracks = danceMusic?.map((dm) => dm.music).filter(Boolean) || []
-  const musicTracks = allMusicTracks.filter((track: any) => track.audio_url && track.audio_url.trim() !== '')
+  const allMusicTracks = danceMusic?.map((dm) => dm.music).filter(Boolean) as any[] || []
+  const musicTracks: any[] = allMusicTracks.filter((track: any) => track.audio_url && track.audio_url.trim() !== '')
 
   // Transform music tracks for the edit form (already filtered to only tracks with audio)
   const musicForEdit = musicTracks.map((track: any) => ({
@@ -56,15 +56,55 @@ export default async function DanceDetailPage({ params, searchParams }: PageProp
     audio_url: track.audio_url || "",
   }))
 
+  // Fetch dance videos
+  const { data: danceVideos } = await supabase
+    .from("dance_videos")
+    .select("id, video_type, url, order_index")
+    .eq("dance_id", id)
+    .order("order_index", { ascending: true })
+
+  // Transform videos for edit form
+  const videosForEdit = (danceVideos || []).map((video: any) => ({
+    id: video.id,
+    video_type: video.video_type,
+    url: video.url,
+  }))
+
+  // Fetch figures and their videos
+  const { data: figureRows } = await supabase
+    .from('dance_figures')
+    .select('id, order_index, scheme_de, scheme_ru')
+    .eq('dance_id', id)
+    .order('order_index', { ascending: true })
+
+  let figures: any[] = []
+  if (figureRows && figureRows.length > 0) {
+    const figureIds = figureRows.map((f: any) => f.id)
+    const { data: videosRows } = await supabase
+      .from('figure_videos')
+      .select('id, figure_id, video_type, url, order_index')
+      .in('figure_id', figureIds)
+      .order('order_index', { ascending: true })
+    const vidsByFigure: Record<string, any[]> = {}
+    ;(videosRows || []).forEach((v: any) => {
+      vidsByFigure[v.figure_id] = vidsByFigure[v.figure_id] || []
+      vidsByFigure[v.figure_id].push({ id: v.id, video_type: v.video_type, url: v.url })
+    })
+    figures = figureRows.map((f: any) => ({ id: f.id, order_index: f.order_index, scheme_de: f.scheme_de, scheme_ru: f.scheme_ru, videos: vidsByFigure[f.id] || [] }))
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <DanceDetailContent 
-          dance={dance} 
-          musicTracks={musicTracks} 
+        <DanceDetailContent
+          dance={dance}
+          musicTracks={musicTracks}
           musicForEdit={musicForEdit}
+          videos={danceVideos || []}
+          videosForEdit={videosForEdit}
           ballId={ballId}
+          figures={figures}
         />
       </main>
     </div>
