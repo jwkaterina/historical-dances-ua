@@ -222,7 +222,7 @@ export const translations = {
 
     // Ball info
     ballInfoLink: "Bitte lesen Sie die Regeln für den Besuch des Balls",
-    ballInfo: "Ball-Informationen",
+    ballRules: "Regeln für den Besuch des Balls",
     editBallInfo: "Informationen bearbeiten",
     saveBallInfo: "Informationen speichern",
     ballInfoSaved: "Ball-Informationen gespeichert",
@@ -447,7 +447,7 @@ export const translations = {
 
     // Ball info
     ballInfoLink: "Пожалуйста, прочитайте правила посещения бала",
-    ballInfo: "Информация о бале",
+    ballRules: "Правила посещения бала",
     editBallInfo: "Редактировать информацию",
     saveBallInfo: "Сохранить информацию",
     ballInfoSaved: "Информация о бале сохранена",
