@@ -121,7 +121,8 @@ export async function getBallById(id: string) {
         place,
         place_de,
         place_ru,
-        info_text,
+        info_ru,
+        info_de,
         created_at,
         user_id,
         ball_sections (
@@ -425,28 +426,6 @@ export async function getDancesForBall() {
   }
 }
 
-export async function getExistingCities() {
-  try {
-    const supabase = await createClient()
-
-    const { data, error } = await supabase
-        .from("balls")
-        .select("place")
-        .not("place", "is", null)
-
-    if (error) {
-      console.log("[v0] Cities fetch error:", error)
-      return []
-    }
-
-    const uniqueCities = Array.from(new Set(data?.map((ball: any) => ball.place).filter(Boolean))) as string[]
-    return uniqueCities.sort()
-  } catch (error) {
-    console.log("[v0] Cities fetch exception:", error)
-    return []
-  }
-}
-
 export async function deleteBall(id: string) {
   try {
     const supabase = await createClient()
@@ -466,7 +445,8 @@ export async function deleteBall(id: string) {
   }
 }
 
-export async function updateBallInfo(id: string, infoText: string) {
+// File: `app/actions/ball.ts`
+export async function updateBallInfo(id: string, info_de?: string, info_ru?: string) {
   try {
     const supabase = await createClient()
 
@@ -475,10 +455,18 @@ export async function updateBallInfo(id: string, infoText: string) {
     } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
+    const payload: Record<string, any> = {}
+    if (typeof info_de !== "undefined") payload.info_de = (info_de ?? "").trim()
+    if (typeof info_ru !== "undefined") payload.info_ru = (info_ru ?? "").trim()
+
+    if (Object.keys(payload).length === 0) {
+      throw new Error("No info provided to update")
+    }
+
     const { error } = await supabase
-      .from("balls")
-      .update({ info_text: infoText })
-      .eq("id", id)
+        .from("balls")
+        .update(payload)
+        .eq("id", id)
 
     if (error) throw error
 
@@ -489,5 +477,6 @@ export async function updateBallInfo(id: string, infoText: string) {
     throw error
   }
 }
+
 
 // End of file
