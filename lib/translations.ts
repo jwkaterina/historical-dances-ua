@@ -219,6 +219,14 @@ export const translations = {
     toastDanceUsedInBall: "Dieser Tanz wird in einem Ball verwendet:",
     toastDanceUsedInBalls: "Dieser Tanz wird in Bällen verwendet:",
     toastRemoveFromBallsFirst: "Entfernen Sie ihn zuerst dort.",
+
+    // Ball info
+    ballInfoLink: "Bitte lesen Sie die Regeln für den Besuch des Balls",
+    ballInfo: "Ball-Informationen",
+    editBallInfo: "Informationen bearbeiten",
+    saveBallInfo: "Informationen speichern",
+    ballInfoSaved: "Ball-Informationen gespeichert",
+    ballInfoSaveFailed: "Fehler beim Speichern der Ball-Informationen",
   },
   ru: {
     // Header
@@ -436,6 +444,14 @@ export const translations = {
     toastDanceUsedInBall: "Этот танец используется в бале:",
     toastDanceUsedInBalls: "Этот танец используется в балах:",
     toastRemoveFromBallsFirst: "Сначала удалите его оттуда.",
+
+    // Ball info
+    ballInfoLink: "Пожалуйста, прочитайте правила посещения бала",
+    ballInfo: "Информация о бале",
+    editBallInfo: "Редактировать информацию",
+    saveBallInfo: "Сохранить информацию",
+    ballInfoSaved: "Информация о бале сохранена",
+    ballInfoSaveFailed: "Ошибка при сохранении информации о бале",
   },
 } as const
 

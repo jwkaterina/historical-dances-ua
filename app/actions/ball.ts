@@ -121,6 +121,7 @@ export async function getBallById(id: string) {
         place,
         place_de,
         place_ru,
+        info_text,
         created_at,
         user_id,
         ball_sections (
@@ -461,6 +462,30 @@ export async function deleteBall(id: string) {
     revalidatePath("/balls")
   } catch (error) {
     console.log("[v0] Delete ball error:", error)
+    throw error
+  }
+}
+
+export async function updateBallInfo(id: string, infoText: string) {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    const { error } = await supabase
+      .from("balls")
+      .update({ info_text: infoText })
+      .eq("id", id)
+
+    if (error) throw error
+
+    revalidatePath(`/balls/${id}/info`)
+    revalidatePath(`/balls/${id}`)
+  } catch (error) {
+    console.log("[v0] Update ball info error:", error)
     throw error
   }
 }

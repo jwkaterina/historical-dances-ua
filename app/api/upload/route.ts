@@ -13,27 +13,32 @@ export async function POST(request: NextRequest) {
     // Validate file type
     const isVideo = contentType.startsWith("video/")
     const isAudio = contentType.startsWith("audio/")
+    const isImage = contentType.startsWith("image/")
 
-    if (!isVideo && !isAudio) {
+    if (!isVideo && !isAudio && !isImage) {
       return NextResponse.json(
-        { error: "Only video and audio files are allowed" },
+        { error: "Only video, audio, and image files are allowed" },
         { status: 400 }
       )
     }
 
-    // Check file size (100MB limit)
-    const MAX_SIZE = 100 * 1024 * 1024
+    // Check file size (100MB for video, 20MB for audio, 10MB for images)
+    let MAX_SIZE = 100 * 1024 * 1024
+    if (isAudio) MAX_SIZE = 20 * 1024 * 1024
+    if (isImage) MAX_SIZE = 10 * 1024 * 1024
+
     if (fileSize && fileSize > MAX_SIZE) {
+      const maxSizeMB = isImage ? "10MB" : isAudio ? "20MB" : "100MB"
       return NextResponse.json(
-        { error: "File too large. Maximum size is 100MB" },
+        { error: `File too large. Maximum size is ${maxSizeMB}` },
         { status: 413 }
       )
     }
 
-    const bucketName = isAudio ? "audio" : "videos"
+    const bucketName = isAudio ? "audio" : isVideo ? "videos" : "images"
 
     // Generate safe filename
-    const ext = filename.split(".").pop() || (isAudio ? "mp3" : "mp4")
+    const ext = filename.split(".").pop() || (isAudio ? "mp3" : isVideo ? "mp4" : "jpg")
     const sanitizedName = filename
       .replace(/\.[^/.]+$/, "")
       .toLowerCase()
