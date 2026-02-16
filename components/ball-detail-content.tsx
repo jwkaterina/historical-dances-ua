@@ -203,7 +203,7 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
         <div className="mb-6">
           <Link
             href={`/balls/${ball.id}/info`}
-            className="text-primary hover:underline font-medium"
+            className="text-primary underline underline-offset-2 font-medium"
           >
             {t("ballInfoLink")}
           </Link>
