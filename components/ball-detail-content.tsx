@@ -200,6 +200,15 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
           )}
         </div>
 
+        <div className="mb-6">
+          <Link
+            href={`/balls/${ball.id}/info`}
+            className="text-primary hover:underline font-medium"
+          >
+            {t("ballInfoLink")}
+          </Link>
+        </div>
+
         {sortedSections.length === 0 ? (
             <Card>
               <CardContent className="p-6">
