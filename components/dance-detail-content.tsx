@@ -51,6 +51,14 @@ interface VideoEntry {
 interface FigureVideoEntry { id: string; video_type: 'youtube'|'uploaded'; url: string }
 interface FigureEntry { id: string; order_index: number; scheme_de?: string | null; scheme_ru?: string | null; videos: FigureVideoEntry[] }
 
+interface LinkedTutorial {
+  id: string
+  title_de: string
+  title_ru: string
+  url: string
+  type: string
+}
+
 interface DanceDetailContentProps {
   dance: Dance
   musicTracks: MusicTrack[]
@@ -59,9 +67,11 @@ interface DanceDetailContentProps {
   videosForEdit: VideoEntry[]
   ballId?: string
   figures?: FigureEntry[]
+  linkedTutorials?: LinkedTutorial[]
+  linkedTutorialIds?: string[]
 }
 
-export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, videosForEdit, ballId, figures = [] }: DanceDetailContentProps) {
+export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, videosForEdit, ballId, figures = [], linkedTutorials = [], linkedTutorialIds = [] }: DanceDetailContentProps) {
   const { t, language } = useLanguage()
 
   // Get localized content
@@ -137,6 +147,7 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
                   scheme_ru: f.scheme_ru || '',
                   videos: f.videos.map(v => ({ id: v.id, video_type: v.video_type, url: v.url }))
                 }))}
+                initialTutorialIds={linkedTutorialIds}
               />
             </div>
             <div className="flex-1 sm:flex-none">
@@ -272,6 +283,31 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
                 )
               })}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {linkedTutorials.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-lg">{t("linkedTutorials")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {linkedTutorials.map((tut) => {
+                const title = language === 'ru' ? tut.title_ru : tut.title_de
+                return (
+                  <li key={tut.id}>
+                    <Link
+                      href={`/tutorials/${tut.id}?danceId=${dance.id}`}
+                      className="text-sm text-primary underline hover:text-primary/80 transition-colors"
+                    >
+                      {title}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
           </CardContent>
         </Card>
       )}

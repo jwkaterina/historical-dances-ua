@@ -66,7 +66,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
   throw lastError
 }
 
-export async function updateDance(danceData: UpdateDanceData, musicEntries: MusicEntry[], videoEntries: VideoEntry[], figureEntries: FigureEntry[] = []) {
+export async function updateDance(danceData: UpdateDanceData, musicEntries: MusicEntry[], videoEntries: VideoEntry[], figureEntries: FigureEntry[] = [], tutorialIds: string[] = []) {
   try {
     // Verify service role key is available
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -453,8 +453,19 @@ export async function updateDance(danceData: UpdateDanceData, musicEntries: Musi
       })
     }
 
+    // Sync dance_tutorials
+    await withRetry(async () => {
+      await supabase.from('dance_tutorials').delete().eq('dance_id', danceData.id)
+      if (tutorialIds.length > 0) {
+        const { error: tutorialError } = await supabase.from('dance_tutorials').insert(
+          tutorialIds.map(tid => ({ dance_id: danceData.id, tutorial_id: tid }))
+        )
+        if (tutorialError) throw new Error(`Failed to sync tutorials: ${tutorialError.message}`)
+      }
+    })
+
     console.log('[v0] Dance and music updated successfully on server')
-    
+
     // Revalidate the dance detail page
     revalidatePath(`/dance/${danceData.id}`)
     revalidatePath('/')

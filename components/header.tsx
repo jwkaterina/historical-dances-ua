@@ -41,6 +41,12 @@ export function Header() {
             >
               {t("ballsTitle")}
             </Link>
+            <Link
+              href="/tutorials"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {t("tutorials")}
+            </Link>
           </nav>
           <LanguageSwitcher />
           <AuthButton />
@@ -78,6 +84,13 @@ export function Header() {
                   className="text-base font-medium text-foreground transition-colors hover:text-primary"
                 >
                   {t("ballsTitle")}
+                </Link>
+                <Link
+                  href="/tutorials"
+                  onClick={() => setOpen(false)}
+                  className="text-base font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  {t("tutorials")}
                 </Link>
                 <div className="pt-4 border-t border-border">
                   <AuthButton />

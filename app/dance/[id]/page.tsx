@@ -93,6 +93,18 @@ export default async function DanceDetailPage({ params, searchParams }: PageProp
     figures = figureRows.map((f: any) => ({ id: f.id, order_index: f.order_index, scheme_de: f.scheme_de, scheme_ru: f.scheme_ru, videos: vidsByFigure[f.id] || [] }))
   }
 
+  // Fetch linked tutorials
+  const { data: danceTutorialRows } = await supabase
+    .from('dance_tutorials')
+    .select('tutorial_id, tutorials:tutorial_id (id, title_de, title_ru, url, type)')
+    .eq('dance_id', id)
+
+  const linkedTutorials = (danceTutorialRows || [])
+    .map((r: any) => r.tutorials)
+    .filter(Boolean) as { id: string; title_de: string; title_ru: string; url: string; type: string }[]
+
+  const linkedTutorialIds = linkedTutorials.map(t => t.id)
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -105,6 +117,8 @@ export default async function DanceDetailPage({ params, searchParams }: PageProp
           videosForEdit={videosForEdit}
           ballId={ballId}
           figures={figures}
+          linkedTutorials={linkedTutorials}
+          linkedTutorialIds={linkedTutorialIds}
         />
       </main>
     </div>

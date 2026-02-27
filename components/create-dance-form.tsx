@@ -74,6 +74,10 @@ export function CreateDanceForm() {
   const [difficulty, setDifficulty] = useState("")
   const [uploading, setUploading] = useState(false)
   const [origin, setOrigin] = useState("")
+  const [selectedTutorialIds, setSelectedTutorialIds] = useState<string[]>([])
+  const [availableTutorials, setAvailableTutorials] = useState<{ id: string; title_de: string; title_ru: string }[]>([])
+  const [tutorialSearch, setTutorialSearch] = useState("")
+  const [tutorialDropdownOpen, setTutorialDropdownOpen] = useState(false)
 
   const [musicEntries, setMusicEntries] = useState<MusicEntry[]>([
     { title: "", artist: "", tempo: "", genre: "", audio_url: "" }
@@ -282,6 +286,9 @@ export function CreateDanceForm() {
     setSchemeRu("")
     setDifficulty("")
     setOrigin("")
+    setSelectedTutorialIds([])
+    setTutorialSearch("")
+    setTutorialDropdownOpen(false)
     setMusicEntries([{ title: "", artist: "", tempo: "", genre: "", audio_url: "" }])
     setMusicAudioFiles({})
     setVideoEntries([])
@@ -338,12 +345,19 @@ export function CreateDanceForm() {
           scheme_de: schemeDe || null,
           scheme_ru: schemeRu || null,
           difficulty: difficulty || null,
-          origin: origin || null
+          origin: origin || null,
         })
         .select()
         .single()
 
       if (danceError) throw danceError
+
+      // Link selected tutorials
+      if (selectedTutorialIds.length > 0) {
+        await supabase.from('dance_tutorials').insert(
+          selectedTutorialIds.map(tid => ({ dance_id: dance.id, tutorial_id: tid }))
+        )
+      }
 
       // Process and insert video entries
       for (let i = 0; i < videoEntries.length; i++) {
@@ -487,11 +501,17 @@ export function CreateDanceForm() {
     return null
   }
 
+  const fetchTutorials = async () => {
+    const supabase = createClient()
+    const { data } = await supabase.from('tutorials').select('id, title_de, title_ru').order('title_de')
+    if (data) setAvailableTutorials(data)
+  }
+
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
         if (newOpen) {
-          // Reset form when dialog opens to ensure clean state
           resetForm()
+          fetchTutorials()
         }
         setOpen(newOpen)
       }}>
@@ -738,7 +758,61 @@ export function CreateDanceForm() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
+            <div className="space-y-2">
+              <Label>{t("linkedTutorials")}</Label>
+              <div className="relative">
+                <Input
+                  value={tutorialSearch}
+                  onChange={(e) => setTutorialSearch(e.target.value)}
+                  placeholder={t("searchTutorialsInForm")}
+                  onFocus={() => setTutorialDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setTutorialDropdownOpen(false), 150)}
+                />
+                {tutorialDropdownOpen && (() => {
+                  const options = availableTutorials.filter(tut => {
+                    const title = language === 'ru' ? tut.title_ru : tut.title_de
+                    return !selectedTutorialIds.includes(tut.id) &&
+                      (!tutorialSearch || title.toLowerCase().includes(tutorialSearch.toLowerCase()))
+                  })
+                  if (options.length === 0) return null
+                  return (
+                    <div className="absolute z-10 w-full mt-1 border rounded-md bg-popover shadow-md max-h-40 overflow-y-auto">
+                      {options.map(tut => {
+                        const title = language === 'ru' ? tut.title_ru : tut.title_de
+                        return (
+                          <button
+                            key={tut.id}
+                            type="button"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                            onClick={() => { setSelectedTutorialIds([...selectedTutorialIds, tut.id]); setTutorialSearch(""); setTutorialDropdownOpen(false) }}
+                          >
+                            {title}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
+              </div>
+              {selectedTutorialIds.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {selectedTutorialIds.map(id => {
+                    const tut = availableTutorials.find(t => t.id === id)
+                    if (!tut) return null
+                    const title = language === 'ru' ? tut.title_ru : tut.title_de
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground rounded px-2 py-0.5 text-xs">
+                        {title}
+                        <button type="button" onClick={() => setSelectedTutorialIds(selectedTutorialIds.filter(tid => tid !== id))}>
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
