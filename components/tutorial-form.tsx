@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select"
 import { useLanguage } from "@/components/language-provider"
 import { useToast } from "@/hooks/use-toast"
-import { createTutorial, updateTutorial, createCategory, type TutorialData } from "@/app/actions/tutorials"
+import { createTutorial, updateTutorial, type TutorialData } from "@/app/actions/tutorials"
 import { Pencil, Plus, Upload } from "lucide-react"
 
 interface Tutorial {
@@ -44,10 +44,11 @@ interface TutorialFormProps {
   tutorial?: Tutorial
   categories: Category[]
   onSuccess?: () => void
+  onOpen?: () => void
   iconOnly?: boolean
 }
 
-export function TutorialForm({ mode, tutorial, categories, onSuccess, iconOnly }: TutorialFormProps) {
+export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, iconOnly }: TutorialFormProps) {
   const { t, language } = useLanguage()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
@@ -63,10 +64,6 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, iconOnly }
   const [url, setUrl] = useState(tutorial?.url ?? "")
   const [fileName, setFileName] = useState("")
   const [categoryId, setCategoryId] = useState<string>(tutorial?.category_id ?? "none")
-  const [creatingCategory, setCreatingCategory] = useState(false)
-  const [newCategoryDe, setNewCategoryDe] = useState("")
-  const [newCategoryRu, setNewCategoryRu] = useState("")
-  const [savingCategory, setSavingCategory] = useState(false)
 
   const resetForm = () => {
     setTitleDe(tutorial?.title_de ?? "")
@@ -76,13 +73,13 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, iconOnly }
     setUrl(tutorial?.url ?? "")
     setFileName("")
     setCategoryId(tutorial?.category_id ?? "none")
-    setCreatingCategory(false)
-    setNewCategoryDe("")
-    setNewCategoryRu("")
   }
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen) resetForm()
+    if (newOpen) {
+      resetForm()
+      onOpen?.()
+    }
     setOpen(newOpen)
   }
 
@@ -196,27 +193,6 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, iconOnly }
       toast({ title: t("toastError"), description: msg, variant: "destructive" })
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleSaveCategory = async () => {
-    if (!newCategoryDe.trim() || !newCategoryRu.trim()) {
-      toast({ title: t("toastError"), description: t("categoryNameRequired"), variant: "destructive" })
-      return
-    }
-    setSavingCategory(true)
-    try {
-      const result = await createCategory({ name_de: newCategoryDe.trim(), name_ru: newCategoryRu.trim() })
-      if (result.category) {
-        setCategoryId(result.category.id)
-        setCreatingCategory(false)
-        setNewCategoryDe("")
-        setNewCategoryRu("")
-      }
-    } catch {
-      toast({ title: t("toastError"), description: t("toastFailedCreateCategory"), variant: "destructive" })
-    } finally {
-      setSavingCategory(false)
     }
   }
 
@@ -384,47 +360,19 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, iconOnly }
 
           <div className="space-y-2">
             <Label>{t("category")}</Label>
-            {!creatingCategory ? (
-              <div className="flex gap-2">
-                <Select value={categoryId} onValueChange={setCategoryId}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder={t("noCategory")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t("noCategory")}</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {language === 'ru' ? cat.name_ru : cat.name_de}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button type="button" variant="outline" size="sm" onClick={() => setCreatingCategory(true)}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2 rounded-md border p-3">
-                <Input
-                  value={newCategoryDe}
-                  onChange={(e) => setNewCategoryDe(e.target.value)}
-                  placeholder={t("categoryNameDe")}
-                />
-                <Input
-                  value={newCategoryRu}
-                  onChange={(e) => setNewCategoryRu(e.target.value)}
-                  placeholder={t("categoryNameRu")}
-                />
-                <div className="flex gap-2">
-                  <Button type="button" size="sm" onClick={handleSaveCategory} disabled={savingCategory}>
-                    {savingCategory ? t("saving") : t("create")}
-                  </Button>
-                  <Button type="button" size="sm" variant="outline" onClick={() => { setCreatingCategory(false); setNewCategoryDe(""); setNewCategoryRu("") }}>
-                    {t("cancel")}
-                  </Button>
-                </div>
-              </div>
-            )}
+            <Select value={categoryId} onValueChange={setCategoryId}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("noCategory")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{t("noCategory")}</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {language === 'ru' ? cat.name_ru : cat.name_de}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
