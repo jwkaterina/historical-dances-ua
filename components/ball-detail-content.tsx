@@ -125,15 +125,15 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
     try {
       await deleteBall(ball.id)
       toast({
-        title: t("success") || "Success",
-        description: t("ballDeleted") || "Ball deleted successfully",
+        title: t("toastSuccess"),
+        description: t("ballDeleted"),
       })
       router.push("/balls")
     } catch (error) {
       console.error("[v0] Delete ball error:", error)
       toast({
-        title: t("error") || "Error",
-        description: error instanceof Error ? error.message : "Failed to delete ball",
+        title: t("toastError"),
+        description: error instanceof Error ? error.message : t("toastFailedDeleteBall"),
         variant: "destructive",
       })
     }

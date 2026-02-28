@@ -14,31 +14,33 @@ export async function POST(request: NextRequest) {
     const isVideo = contentType.startsWith("video/")
     const isAudio = contentType.startsWith("audio/")
     const isImage = contentType.startsWith("image/")
+    const isPdf = contentType === "application/pdf"
 
-    if (!isVideo && !isAudio && !isImage) {
+    if (!isVideo && !isAudio && !isImage && !isPdf) {
       return NextResponse.json(
-        { error: "Only video, audio, and image files are allowed" },
+        { error: "Only video, audio, image, and PDF files are allowed" },
         { status: 400 }
       )
     }
 
-    // Check file size (100MB for video, 20MB for audio, 10MB for images)
+    // Check file size (100MB for video, 20MB for audio, 10MB for images, 50MB for PDFs)
     let MAX_SIZE = 100 * 1024 * 1024
     if (isAudio) MAX_SIZE = 20 * 1024 * 1024
     if (isImage) MAX_SIZE = 10 * 1024 * 1024
+    if (isPdf) MAX_SIZE = 50 * 1024 * 1024
 
     if (fileSize && fileSize > MAX_SIZE) {
-      const maxSizeMB = isImage ? "10MB" : isAudio ? "20MB" : "100MB"
+      const maxSizeMB = isImage ? "10MB" : isAudio ? "20MB" : isPdf ? "50MB" : "100MB"
       return NextResponse.json(
         { error: `File too large. Maximum size is ${maxSizeMB}` },
         { status: 413 }
       )
     }
 
-    const bucketName = isAudio ? "audio" : isVideo ? "videos" : "images"
+    const bucketName = isAudio ? "audio" : isVideo ? "videos" : isPdf ? "documents" : "images"
 
     // Generate safe filename
-    const ext = filename.split(".").pop() || (isAudio ? "mp3" : isVideo ? "mp4" : "jpg")
+    const ext = filename.split(".").pop() || (isAudio ? "mp3" : isVideo ? "mp4" : isPdf ? "pdf" : "jpg")
     const sanitizedName = filename
       .replace(/\.[^/.]+$/, "")
       .toLowerCase()

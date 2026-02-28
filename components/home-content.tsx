@@ -64,7 +64,7 @@ export function HomeContent({ dances, query }: HomeContentProps) {
             <SearchInput placeholder={t("searchDances")} />
           </Suspense>
         </div>
-        <div className="w-full sm:w-64">
+        <div className="self-end">
           <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
             <SelectTrigger>
               <SelectValue placeholder={t("filterByDifficulty")} />

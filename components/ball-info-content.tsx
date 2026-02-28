@@ -48,7 +48,7 @@ export function BallInfoContent({ ball }: BallInfoContentProps) {
     try {
       await updateBallInfo(ball.id, contentDe, contentRu)
       toast({
-        title: t("success"),
+        title: t("toastSuccess"),
         description: t("ballInfoSaved"),
       })
       setIsEditing(false)
@@ -56,7 +56,7 @@ export function BallInfoContent({ ball }: BallInfoContentProps) {
     } catch (error) {
       console.error("[v0] Save ball info error:", error)
       toast({
-        title: t("error"),
+        title: t("toastError"),
         description: t("ballInfoSaveFailed"),
         variant: "destructive",
       })

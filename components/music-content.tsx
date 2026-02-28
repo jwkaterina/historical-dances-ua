@@ -45,7 +45,7 @@ export function MusicContent({ music, query }: MusicContentProps) {
       </div>
 
       {music && music.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           {music.map((track) => {
             const associatedDances = track.dance_music
               ?.map((dm) => dm.dances)

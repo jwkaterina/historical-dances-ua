@@ -14,16 +14,14 @@ async function BallsPage({ searchParams }: { searchParams: SearchParams }) {
   ])
 
   return (
-    <>
+    <div className="min-h-screen bg-background">
       <Header />
-      <main className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <Suspense fallback={<div>Loading...</div>}>
-            <BallsContent balls={balls} dances={dances} query={searchParams?.q} />
-          </Suspense>
-        </div>
+      <main className="mx-auto max-w-5xl px-6 py-8">
+        <Suspense fallback={<div>Loading...</div>}>
+          <BallsContent balls={balls} dances={dances} query={searchParams?.q} />
+        </Suspense>
       </main>
-    </>
+    </div>
   )
 }
 

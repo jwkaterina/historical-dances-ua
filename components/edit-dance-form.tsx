@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -76,9 +77,10 @@ interface EditDanceFormProps {
   musicTracks: MusicEntry[]
   videoEntries: VideoEntry[]
   figureEntries?: FigureFormEntry[]
+  initialTutorialIds?: string[]
 }
 
-export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries = [] }: EditDanceFormProps) {
+export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries = [], initialTutorialIds = [] }: EditDanceFormProps) {
   const router = useRouter()
   const { t, language } = useLanguage()
   const { isAdmin, loading: authLoading } = useAuth()
@@ -92,6 +94,10 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
   const [descriptionRu, setDescriptionRu] = useState(dance.description_ru || "")
   const [schemeRu, setSchemeRu] = useState(dance.scheme_ru || "")
   const [difficulty, setDifficulty] = useState(dance.difficulty || "")
+  const [selectedTutorialIds, setSelectedTutorialIds] = useState<string[]>(initialTutorialIds)
+  const [availableTutorials, setAvailableTutorials] = useState<{ id: string; title_de: string; title_ru: string }[]>([])
+  const [tutorialSearch, setTutorialSearch] = useState("")
+  const [tutorialDropdownOpen, setTutorialDropdownOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
 
   // Video entries state
@@ -134,6 +140,9 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
     setDescriptionRu(dance.description_ru || "")
     setSchemeRu(dance.scheme_ru || "")
     setDifficulty(dance.difficulty || "")
+    setSelectedTutorialIds(initialTutorialIds)
+    setTutorialSearch("")
+    setTutorialDropdownOpen(false)
     setMusicEntries(getInitialMusicEntries())
     setMusicAudioFiles({})
     setVideoFormEntries(videoEntries)
@@ -143,11 +152,17 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
     setOpenFigures({})
   }
   
+  const fetchTutorials = async () => {
+    const supabase = createClient()
+    const { data } = await supabase.from('tutorials').select('id, title_de, title_ru').order('title_de')
+    if (data) setAvailableTutorials(data)
+  }
+
   // Reset form when dialog opens to ensure clean state
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen) {
-      // When opening, reset to original values from props
       resetForm()
+      fetchTutorials()
     }
     setOpen(newOpen)
   }
@@ -465,7 +480,8 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
         },
         musicEntriesForSubmit,
         validVideoEntries,
-        processedFigureEntries
+        processedFigureEntries,
+        selectedTutorialIds
       )
 
       toast({
@@ -788,7 +804,61 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
+            <div className="space-y-2">
+              <Label>{t("linkedTutorials")}</Label>
+              <div className="relative">
+                <Input
+                  value={tutorialSearch}
+                  onChange={(e) => setTutorialSearch(e.target.value)}
+                  placeholder={t("searchTutorialsInForm")}
+                  onFocus={() => setTutorialDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setTutorialDropdownOpen(false), 150)}
+                />
+                {tutorialDropdownOpen && (() => {
+                  const options = availableTutorials.filter(tut => {
+                    const title = language === 'ru' ? tut.title_ru : tut.title_de
+                    return !selectedTutorialIds.includes(tut.id) &&
+                      (!tutorialSearch || title.toLowerCase().includes(tutorialSearch.toLowerCase()))
+                  })
+                  if (options.length === 0) return null
+                  return (
+                    <div className="absolute z-10 w-full mt-1 border rounded-md bg-popover shadow-md max-h-40 overflow-y-auto">
+                      {options.map(tut => {
+                        const title = language === 'ru' ? tut.title_ru : tut.title_de
+                        return (
+                          <button
+                            key={tut.id}
+                            type="button"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                            onClick={() => { setSelectedTutorialIds([...selectedTutorialIds, tut.id]); setTutorialSearch(""); setTutorialDropdownOpen(false) }}
+                          >
+                            {title}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
+              </div>
+              {selectedTutorialIds.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {selectedTutorialIds.map(id => {
+                    const tut = availableTutorials.find(t => t.id === id)
+                    if (!tut) return null
+                    const title = language === 'ru' ? tut.title_ru : tut.title_de
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground rounded px-2 py-0.5 text-xs">
+                        {title}
+                        <button type="button" onClick={() => setSelectedTutorialIds(selectedTutorialIds.filter(tid => tid !== id))}>
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">

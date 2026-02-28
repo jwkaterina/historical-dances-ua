@@ -366,7 +366,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
 
   const handleSubmit = async () => {
     if (!nameDE || !nameRU || !date || !selectedCityDE || !selectedCityRU) {
-      toast({ title: t("error"), description: t("fillAllFields"), variant: "destructive" })
+      toast({ title: t("toastError"), description: t("fillAllFields"), variant: "destructive" })
       return
     }
 
@@ -417,16 +417,16 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
 
       if (ballToEdit?.id) {
         await updateBall(ballToEdit.id, ballData as any)
-        toast({ title: t("success"), description: t("ballUpdated") })
+        toast({ title: t("toastSuccess"), description: t("ballUpdated") })
       } else {
         await createBall(ballData as any)
-        toast({ title: t("success"), description: t("ballCreated") })
+        toast({ title: t("toastSuccess"), description: t("ballCreated") })
       }
 
       setOpen(false)
       router.refresh()
     } catch (error) {
-      toast({ title: t("error"), description: (error as Error).message, variant: "destructive" })
+      toast({ title: t("toastError"), description: (error as Error).message, variant: "destructive" })
     } finally {
       setLoading(false)
     }
