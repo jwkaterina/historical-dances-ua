@@ -126,15 +126,15 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, iconOnly }
     const isImage = type === 'image'
 
     if (isPdf && file.type !== "application/pdf") {
-      toast({ title: t("toastError"), description: "Please select a PDF file", variant: "destructive" })
+      toast({ title: t("toastError"), description: t("toastSelectPdfFile"), variant: "destructive" })
       return
     }
     if (isVideo && !file.type.startsWith("video/")) {
-      toast({ title: t("toastError"), description: "Please select a video file", variant: "destructive" })
+      toast({ title: t("toastError"), description: t("toastSelectVideoFile"), variant: "destructive" })
       return
     }
     if (isImage && !file.type.startsWith("image/")) {
-      toast({ title: t("toastError"), description: "Please select an image file", variant: "destructive" })
+      toast({ title: t("toastError"), description: t("toastSelectImageFile"), variant: "destructive" })
       return
     }
 
@@ -214,7 +214,7 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, iconOnly }
         setNewCategoryRu("")
       }
     } catch {
-      toast({ title: t("toastError"), description: t("error"), variant: "destructive" })
+      toast({ title: t("toastError"), description: t("toastFailedCreateCategory"), variant: "destructive" })
     } finally {
       setSavingCategory(false)
     }

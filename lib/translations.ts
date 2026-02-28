@@ -225,6 +225,11 @@ export const translations = {
     toastDanceUsedInBall: "Dieser Tanz wird in einem Ball verwendet:",
     toastDanceUsedInBalls: "Dieser Tanz wird in Bällen verwendet:",
     toastRemoveFromBallsFirst: "Entfernen Sie ihn zuerst dort.",
+    toastFailedDeleteBall: "Ball konnte nicht gelöscht werden",
+    toastSelectPdfFile: "Bitte wählen Sie eine PDF-Datei aus",
+    toastSelectVideoFile: "Bitte wählen Sie eine Videodatei aus",
+    toastSelectImageFile: "Bitte wählen Sie eine Bilddatei aus",
+    toastFailedCreateCategory: "Kategorie konnte nicht erstellt werden",
 
     // Ball info
     ballInfoLink: "Bitte lesen Sie die Regeln für den Besuch des Balls",
@@ -509,6 +514,11 @@ export const translations = {
     toastDanceUsedInBall: "Этот танец используется в бале:",
     toastDanceUsedInBalls: "Этот танец используется в балах:",
     toastRemoveFromBallsFirst: "Сначала удалите его оттуда.",
+    toastFailedDeleteBall: "Не удалось удалить бал",
+    toastSelectPdfFile: "Пожалуйста, выберите PDF-файл",
+    toastSelectVideoFile: "Пожалуйста, выберите видеофайл",
+    toastSelectImageFile: "Пожалуйста, выберите файл изображения",
+    toastFailedCreateCategory: "Не удалось создать категорию",
 
     // Ball info
     ballInfoLink: "Пожалуйста, прочитайте правила посещения бала",

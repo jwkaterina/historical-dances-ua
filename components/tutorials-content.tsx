@@ -258,7 +258,7 @@ export function TutorialsContent({ tutorials, categories, query }: TutorialsCont
             <SearchInput placeholder={t("searchTutorials")} />
           </Suspense>
         </div>
-        <div className="w-full sm:w-64">
+        <div className="self-end">
           <Select value={activeCategoryId} onValueChange={setActiveCategoryId}>
             <SelectTrigger>
               <SelectValue placeholder={t("allCategories")} />
