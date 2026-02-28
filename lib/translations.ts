@@ -230,6 +230,7 @@ export const translations = {
     toastSelectVideoFile: "Bitte wählen Sie eine Videodatei aus",
     toastSelectImageFile: "Bitte wählen Sie eine Bilddatei aus",
     toastFailedCreateCategory: "Kategorie konnte nicht erstellt werden",
+    toastCategoryCreated: "Kategorie erfolgreich erstellt",
 
     // Ball info
     ballInfoLink: "Bitte lesen Sie die Regeln für den Besuch des Balls",
@@ -291,6 +292,15 @@ export const translations = {
     categoryNameDe: "Kategoriename (Deutsch)",
     categoryNameRu: "Kategoriename (Russisch)",
     categoryNameRequired: "Bitte geben Sie den Kategorienamen in beiden Sprachen ein",
+    manageCategories: "Kategorien verwalten",
+    editCategory: "Kategorie bearbeiten",
+    deleteCategoryLabel: "Kategorie löschen",
+    deleteConfirmCategory: "Kategorie löschen",
+    deleteConfirmMessageCategory: "Sind Sie sicher, dass Sie diese Kategorie löschen möchten? Anleitungen in dieser Kategorie verlieren ihre Kategoriezuweisung.",
+    toastCategoryUpdated: "Kategorie erfolgreich aktualisiert",
+    toastFailedUpdateCategory: "Kategorie konnte nicht aktualisiert werden",
+    toastCategoryDeleted: "Kategorie erfolgreich gelöscht",
+    toastFailedDeleteCategory: "Kategorie konnte nicht gelöscht werden",
   },
   ru: {
     // Header
@@ -519,6 +529,7 @@ export const translations = {
     toastSelectVideoFile: "Пожалуйста, выберите видеофайл",
     toastSelectImageFile: "Пожалуйста, выберите файл изображения",
     toastFailedCreateCategory: "Не удалось создать категорию",
+    toastCategoryCreated: "Категория успешно создана",
 
     // Ball info
     ballInfoLink: "Пожалуйста, прочитайте правила посещения бала",
@@ -580,6 +591,15 @@ export const translations = {
     categoryNameDe: "Название категории (Немецкий)",
     categoryNameRu: "Название категории (Русский)",
     categoryNameRequired: "Пожалуйста, введите название категории на обоих языках",
+    manageCategories: "Управление категориями",
+    editCategory: "Редактировать категорию",
+    deleteCategoryLabel: "Удалить категорию",
+    deleteConfirmCategory: "Удалить категорию",
+    deleteConfirmMessageCategory: "Вы уверены, что хотите удалить эту категорию? Обучающие материалы в этой категории потеряют привязку к категории.",
+    toastCategoryUpdated: "Категория успешно обновлена",
+    toastFailedUpdateCategory: "Не удалось обновить категорию",
+    toastCategoryDeleted: "Категория успешно удалена",
+    toastFailedDeleteCategory: "Не удалось удалить категорию",
   },
 } as const
 

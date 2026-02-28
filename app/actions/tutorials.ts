@@ -123,6 +123,61 @@ export async function createCategory(data: CategoryData) {
   }
 }
 
+export async function updateCategory(id: string, data: CategoryData) {
+  try {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set')
+    }
+
+    const supabase = await createServiceClient()
+
+    const { error } = await withRetry(() =>
+      supabase
+        .from('tutorial_categories')
+        .update({ name_de: data.name_de, name_ru: data.name_ru })
+        .eq('id', id)
+    )
+
+    if (error) throw new Error(error.message)
+
+    revalidatePath('/tutorials')
+    return { success: true }
+  } catch (error) {
+    console.error('[v0] updateCategory error:', error)
+    throw new Error(error instanceof Error ? error.message : 'Unknown error')
+  }
+}
+
+export async function deleteCategory(id: string) {
+  try {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set')
+    }
+
+    const supabase = await createServiceClient()
+
+    // Nullify category_id on tutorials that use this category
+    await withRetry(() =>
+      supabase
+        .from('tutorials')
+        .update({ category_id: null })
+        .eq('category_id', id)
+    )
+
+    const { error } = await withRetry(() =>
+      supabase.from('tutorial_categories').delete().eq('id', id)
+    )
+
+    if (error) throw new Error(error.message)
+
+    revalidatePath('/tutorials')
+    return { success: true }
+  } catch (error) {
+    console.error('[v0] deleteCategory error:', error)
+    throw new Error(error instanceof Error ? error.message : 'Unknown error')
+  }
+}
+
 export async function deleteTutorial(id: string) {
   try {
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {

@@ -8,8 +8,17 @@ import { SearchInput } from "@/components/search-input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TutorialForm } from "@/components/tutorial-form"
-import { deleteTutorial } from "@/app/actions/tutorials"
-import { Trash2, X } from "lucide-react"
+import { deleteTutorial, updateCategory, deleteCategory, createCategory } from "@/app/actions/tutorials"
+import { Pencil, Trash2, X } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import {
   Select,
@@ -62,6 +71,190 @@ function getYouTubeId(url: string): string | null {
     if (match) return match[1]
   }
   return null
+}
+
+function ManageCategoriesDialog({ categories, onOpen }: { categories: Category[]; onOpen?: () => void }) {
+  const { t, language } = useLanguage()
+  const { toast } = useToast()
+  const [open, setOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editDe, setEditDe] = useState("")
+  const [editRu, setEditRu] = useState("")
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [newDe, setNewDe] = useState("")
+  const [newRu, setNewRu] = useState("")
+  const [savingNew, setSavingNew] = useState(false)
+
+  const startEdit = (cat: Category) => {
+    setEditingId(cat.id)
+    setEditDe(cat.name_de)
+    setEditRu(cat.name_ru)
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditDe("")
+    setEditRu("")
+  }
+
+  const handleSave = async (id: string) => {
+    if (!editDe.trim() || !editRu.trim()) {
+      toast({ title: t("toastError"), description: t("categoryNameRequired"), variant: "destructive" })
+      return
+    }
+    setSavingId(id)
+    try {
+      await updateCategory(id, { name_de: editDe.trim(), name_ru: editRu.trim() })
+      toast({ title: t("toastSuccess"), description: t("toastCategoryUpdated") })
+      cancelEdit()
+    } catch {
+      toast({ title: t("toastError"), description: t("toastFailedUpdateCategory"), variant: "destructive" })
+    } finally {
+      setSavingId(null)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id)
+    try {
+      await deleteCategory(id)
+      toast({ title: t("toastSuccess"), description: t("toastCategoryDeleted") })
+    } catch {
+      toast({ title: t("toastError"), description: t("toastFailedDeleteCategory"), variant: "destructive" })
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const handleCreate = async () => {
+    if (!newDe.trim() || !newRu.trim()) {
+      toast({ title: t("toastError"), description: t("categoryNameRequired"), variant: "destructive" })
+      return
+    }
+    setSavingNew(true)
+    try {
+      await createCategory({ name_de: newDe.trim(), name_ru: newRu.trim() })
+      toast({ title: t("toastSuccess"), description: t("toastCategoryCreated") })
+      setNewDe("")
+      setNewRu("")
+    } catch {
+      toast({ title: t("toastError"), description: t("toastFailedCreateCategory"), variant: "destructive" })
+    } finally {
+      setSavingNew(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (v) onOpen?.(); setOpen(v) }}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">{t("manageCategories")}</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t("manageCategories")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 mt-2">
+          {categories.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">{t("noCategory")}</p>
+          )}
+          {categories.map((cat) => {
+            const name = language === 'ru' ? cat.name_ru : cat.name_de
+            const isEditing = editingId === cat.id
+            return (
+              <div key={cat.id} className="rounded-md border p-3 space-y-2">
+                {isEditing ? (
+                  <>
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t("categoryNameDe")}</Label>
+                      <Input
+                        value={editDe}
+                        onChange={(e) => setEditDe(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t("categoryNameRu")}</Label>
+                      <Input
+                        value={editRu}
+                        onChange={(e) => setEditRu(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" className="h-7 text-xs" onClick={() => handleSave(cat.id)} disabled={savingId === cat.id}>
+                        {savingId === cat.id ? t("saving") : t("update")}
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={cancelEdit}>
+                        {t("cancel")}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm">{name}</span>
+                    <div className="flex gap-1 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(cat)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t("deleteConfirmCategory")}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t("deleteConfirmMessageCategory")} {`"${name}"`}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <div className="flex gap-3">
+                            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(cat.id)}
+                              disabled={deletingId === cat.id}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {deletingId === cat.id ? t("deleting") : t("delete")}
+                            </AlertDialogAction>
+                          </div>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="border-t pt-4 space-y-3">
+          <p className="text-sm font-medium">{t("createNewCategory")}</p>
+          <div className="space-y-1">
+            <Label className="text-xs">{t("categoryNameDe")}</Label>
+            <Input
+              value={newDe}
+              onChange={(e) => setNewDe(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">{t("categoryNameRu")}</Label>
+            <Input
+              value={newRu}
+              onChange={(e) => setNewRu(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+          <Button size="sm" onClick={handleCreate} disabled={savingNew}>
+            {savingNew ? t("saving") : t("create")}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 function DeleteTutorialButton({ id, title }: { id: string; title: string }) {
@@ -237,15 +430,16 @@ export function TutorialsContent({ tutorials, categories, query }: TutorialsCont
         </div>
         {isAdmin && (
           <div className="flex flex-col gap-2 sm:flex-row shrink-0">
-            <TutorialForm mode="create" categories={categories} />
+            <TutorialForm mode="create" categories={categories} onOpen={() => setManageMode(false)} />
+            <ManageCategoriesDialog categories={categories} onOpen={() => setManageMode(false)} />
             <Button
               variant={manageMode ? "secondary" : "outline"}
               size="sm"
               onClick={() => setManageMode(!manageMode)}
             >
               <span className="relative inline-flex justify-center">
-                <span className="invisible">{t("edit")}</span>
-                <span className="absolute">{manageMode ? t("done") : t("edit")}</span>
+                <span className="invisible">{t("manageTutorials")}</span>
+                <span className="absolute">{manageMode ? t("done") : t("manageTutorials")}</span>
               </span>
             </Button>
           </div>
