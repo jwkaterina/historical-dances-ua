@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a bilingual (German/Russian) historical dance management application built with Next.js 16, Supabase, and TypeScript. Users can create and manage dances with music, organize balls with sections and playlists, and access content in both languages.
+This is a bilingual (Ukrainian/Russian) historical dance management application built with Next.js 16, Supabase, and TypeScript. Users can create and manage dances with music, organize balls with sections and playlists, and access content in both languages.
 
 ## Development Commands
 
@@ -59,7 +59,7 @@ scripts/             # SQL migration scripts (numbered sequentially)
 
 ### Core Tables
 - **dances**: Dance records with multilingual fields (name, description, scheme)
-  - Fields: `name`, `name_de`, `name_ru`, `description`, `description_de`, `description_ru`, `scheme`, `scheme_de`, `scheme_ru`, `difficulty`, `origin`, `youtube_url`, `video_url`
+  - Fields: `name`, `name_ua`, `name_ru`, `description`, `description_ua`, `description_ru`, `scheme`, `scheme_ua`, `scheme_ru`, `difficulty`, `origin`, `youtube_url`, `video_url`
 
 - **music**: Music tracks with audio files
   - Fields: `title`, `artist`, `tempo`, `genre`, `audio_url`
@@ -67,16 +67,16 @@ scripts/             # SQL migration scripts (numbered sequentially)
 - **dance_music**: Junction table linking dances to music tracks
 
 - **balls**: Ball events with dates and locations
-  - Fields: `name`, `name_de`, `name_ru`, `date`, `place`, `place_de`, `place_ru`, `info_text`, `user_id`
+  - Fields: `name`, `name_ua`, `name_ru`, `date`, `place`, `place_ua`, `place_ru`, `info_ua`, `info_ru`, `user_id`
 
 - **ball_sections**: Sections within a ball (e.g., "Opening", "Main Part")
-  - Fields: `ball_id`, `name`, `name_de`, `name_ru`, `order_index`
+  - Fields: `ball_id`, `name`, `name_ua`, `name_ru`, `order_index`
 
 - **section_dances**: Dances within a ball section with specific music selections
   - Fields: `section_id`, `dance_id`, `music_ids` (array), `order_index`
 
 - **section_texts**: Text blocks within a ball section (announcements, breaks)
-  - Fields: `section_id`, `content_de`, `content_ru`, `order_index`
+  - Fields: `section_id`, `content_ua`, `content_ru`, `order_index`
 
 ### Key Relationships
 - Dances ↔ Music: Many-to-many via `dance_music`

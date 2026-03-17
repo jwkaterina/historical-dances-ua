@@ -8,11 +8,11 @@ import { formatDate } from "@/lib/date-utils"
 interface Ball {
   id: string
   name: string
-  name_de: string | null
+  name_ua: string | null
   name_ru: string | null
   date: string
   place: string | null
-  place_de: string | null
+  place_ua: string | null
   place_ru: string | null
   ball_dances?: Array<{
     dances: {
@@ -34,7 +34,7 @@ export function BallList({ balls, query }: BallListProps) {
     if (language === "ru") {
       return ball.place_ru || ball.place || ""
     } else {
-      return ball.place_de || ball.place || ""
+      return ball.place_ua || ball.place || ""
     }
   }
 
@@ -42,8 +42,8 @@ export function BallList({ balls, query }: BallListProps) {
   const filteredBalls = balls.filter((ball) => {
     const displayName = language === "ru" 
       ? (ball.name_ru || ball.name)
-      : (ball.name_de || ball.name)
-    
+      : (ball.name_ua || ball.name)
+
     if (!query) return true
     return displayName.toLowerCase().includes(query.toLowerCase())
   })
@@ -63,8 +63,8 @@ export function BallList({ balls, query }: BallListProps) {
       {filteredBalls.map((ball) => {
         const displayName = language === "ru" 
           ? (ball.name_ru || ball.name)
-          : (ball.name_de || ball.name)
-        
+          : (ball.name_ua || ball.name)
+
         const displayPlace = getCityDisplay(ball)
         const formattedDate = formatDate(ball.date, language)
 

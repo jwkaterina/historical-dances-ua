@@ -46,7 +46,7 @@
     "@tiptap/extension-link": "^3.19.0",
     "@tiptap/react": "^3.19.0",
     "@tiptap/starter-kit": "^3.19.0",
-    "@vercel/analytics": "latest",
+    "@vercel/analytics": "^1.4.0",
     "@vercel/blob": "latest",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",

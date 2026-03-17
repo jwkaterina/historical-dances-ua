@@ -6,17 +6,17 @@ import { type Language, translations } from "@/lib/translations"
 interface LanguageContextType {
   language: Language
   setLanguage: (lang: Language) => void
-  t: (key: keyof typeof translations.de) => string
+  t: (key: keyof typeof translations.ua) => string
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("de")
+  const [language, setLanguageState] = useState<Language>("ua")
 
   useEffect(() => {
     const saved = localStorage.getItem("language") as Language
-    if (saved && (saved === "de" || saved === "ru")) {
+    if (saved && (saved === "ua" || saved === "ru")) {
       setLanguageState(saved)
     }
   }, [])
@@ -26,7 +26,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("language", lang)
   }
 
-  const t = (key: keyof typeof translations.de): string => {
+  const t = (key: keyof typeof translations.ua): string => {
     return translations[language][key]
   }
 

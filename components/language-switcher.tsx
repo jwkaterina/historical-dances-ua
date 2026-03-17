@@ -21,10 +21,10 @@ export function LanguageSwitcher() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() => setLanguage("de")}
-          className={language === "de" ? "bg-accent" : ""}
+          onClick={() => setLanguage("ua")}
+          className={language === "ua" ? "bg-accent" : ""}
         >
-          DE - Deutsch
+          UA - Українська
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setLanguage("ru")}

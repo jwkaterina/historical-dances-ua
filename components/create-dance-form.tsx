@@ -47,7 +47,7 @@ interface FigureVideoFormEntry {
 }
 
 interface FigureFormEntry {
-  scheme_de: string
+  scheme_ua: string
   scheme_ru: string
   videos: FigureVideoFormEntry[]
 }
@@ -61,9 +61,9 @@ export function CreateDanceForm() {
   const { toast } = useToast()
   
   // German fields
-  const [nameDe, setNameDe] = useState("")
-  const [descriptionDe, setDescriptionDe] = useState("")
-  const [schemeDe, setSchemeDe] = useState("")
+  const [nameUa, setNameUa] = useState("")
+  const [descriptionUa, setDescriptionUa] = useState("")
+  const [schemeUa, setSchemeUa] = useState("")
   
   // Russian fields
   const [nameRu, setNameRu] = useState("")
@@ -75,7 +75,7 @@ export function CreateDanceForm() {
   const [uploading, setUploading] = useState(false)
   const [origin, setOrigin] = useState("")
   const [selectedTutorialIds, setSelectedTutorialIds] = useState<string[]>([])
-  const [availableTutorials, setAvailableTutorials] = useState<{ id: string; title_de: string; title_ru: string }[]>([])
+  const [availableTutorials, setAvailableTutorials] = useState<{ id: string; title_ua: string; title_ru: string }[]>([])
   const [tutorialSearch, setTutorialSearch] = useState("")
   const [tutorialDropdownOpen, setTutorialDropdownOpen] = useState(false)
 
@@ -142,7 +142,7 @@ export function CreateDanceForm() {
 
   // Figure entry functions
   const addFigure = () => {
-    setFigureEntries([...figureEntries, { scheme_de: '', scheme_ru: '', videos: [] }])
+    setFigureEntries([...figureEntries, { scheme_ua: '', scheme_ru: '', videos: [] }])
   }
 
   const removeFigure = (index: number) => {
@@ -152,10 +152,10 @@ export function CreateDanceForm() {
     setFigureVideoFiles(newFigureVideoFiles)
   }
 
-  const updateFigureScheme = (index: number, lang: 'de' | 'ru', value: string) => {
+  const updateFigureScheme = (index: number, lang: 'ua' | 'ru', value: string) => {
     const updated = [...figureEntries]
-    if (lang === 'de') {
-      updated[index].scheme_de = value
+    if (lang === 'ua') {
+      updated[index].scheme_ua = value
     } else {
       updated[index].scheme_ru = value
     }
@@ -278,9 +278,9 @@ export function CreateDanceForm() {
   }
 
   const resetForm = () => {
-    setNameDe("")
-    setDescriptionDe("")
-    setSchemeDe("")
+    setNameUa("")
+    setDescriptionUa("")
+    setSchemeUa("")
     setNameRu("")
     setDescriptionRu("")
     setSchemeRu("")
@@ -302,7 +302,7 @@ export function CreateDanceForm() {
     e.preventDefault()
     
     // Validate that both language names are provided
-    if (!nameDe.trim() || !nameRu.trim()) {
+    if (!nameUa.trim() || !nameRu.trim()) {
       toast({
         title: t("toastError"),
         description: t("toastNameRequiredBothLanguages"),
@@ -335,14 +335,14 @@ export function CreateDanceForm() {
       const { data: dance, error: danceError } = await supabase
         .from("dances")
         .insert({
-          name: nameDe || nameRu,
-          name_de: nameDe || null,
+          name: nameUa || nameRu,
+          name_ua: nameUa || null,
           name_ru: nameRu || null,
-          description: descriptionDe || descriptionRu || null,
-          description_de: descriptionDe || null,
+          description: descriptionUa || descriptionRu || null,
+          description_ua: descriptionUa || null,
           description_ru: descriptionRu || null,
-          scheme: schemeDe || schemeRu || null,
-          scheme_de: schemeDe || null,
+          scheme: schemeUa || schemeRu || null,
+          scheme_ua: schemeUa || null,
           scheme_ru: schemeRu || null,
           difficulty: difficulty || null,
           origin: origin || null,
@@ -396,7 +396,7 @@ export function CreateDanceForm() {
           .from("dance_figures")
           .insert({
             dance_id: dance.id,
-            scheme_de: figure.scheme_de || null,
+            scheme_ua: figure.scheme_ua || null,
             scheme_ru: figure.scheme_ru || null,
             order_index: i,
           })
@@ -450,7 +450,7 @@ export function CreateDanceForm() {
       )
 
       // Get the dance name based on current language for auto-title
-      const danceName = language === "ru" ? (nameRu || nameDe) : (nameDe || nameRu)
+      const danceName = language === "ru" ? (nameRu || nameUa) : (nameUa || nameRu)
 
       // Create music entries and link them
       // Filter to only tracks that have audio files
@@ -503,7 +503,7 @@ export function CreateDanceForm() {
 
   const fetchTutorials = async () => {
     const supabase = createClient()
-    const { data } = await supabase.from('tutorials').select('id, title_de, title_ru').order('title_de')
+    const { data } = await supabase.from('tutorials').select('id, title_ua, title_ru').order('title_ua')
     if (data) setAvailableTutorials(data)
   }
 
@@ -533,24 +533,24 @@ export function CreateDanceForm() {
               <Input id="nameRu" value={nameRu} onChange={(e) => setNameRu(e.target.value)} placeholder={t("danceNamePlaceholder")} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nameDe">{t("danceName")} (Deutsch) *</Label>
-              <Input id="nameDe" value={nameDe} onChange={(e) => setNameDe(e.target.value)} placeholder={t("danceNamePlaceholder")} />
+              <Label htmlFor="nameUa">{t("danceName")} (Українська) *</Label>
+              <Input id="nameUa" value={nameUa} onChange={(e) => setNameUa(e.target.value)} placeholder={t("danceNamePlaceholder")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="descriptionRu">{t("descriptionLabel")} (Русский)</Label>
               <Textarea id="descriptionRu" value={descriptionRu} onChange={(e) => setDescriptionRu(e.target.value)} placeholder={t("descriptionPlaceholder")} rows={2} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="descriptionDe">{t("descriptionLabel")} (Deutsch)</Label>
-              <Textarea id="descriptionDe" value={descriptionDe} onChange={(e) => setDescriptionDe(e.target.value)} placeholder={t("descriptionPlaceholder")} rows={2} />
+              <Label htmlFor="descriptionUa">{t("descriptionLabel")} (Українська)</Label>
+              <Textarea id="descriptionUa" value={descriptionUa} onChange={(e) => setDescriptionUa(e.target.value)} placeholder={t("descriptionPlaceholder")} rows={2} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="schemeRu">{t("schemeLabel")} (Русский)</Label>
               <Textarea id="schemeRu" value={schemeRu} onChange={(e) => setSchemeRu(e.target.value)} placeholder={t("schemePlaceholder")} rows={4} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="schemeDe">{t("schemeLabel")} (Deutsch)</Label>
-              <Textarea id="schemeDe" value={schemeDe} onChange={(e) => setSchemeDe(e.target.value)} placeholder={t("schemePlaceholder")} rows={4} />
+              <Label htmlFor="schemeUa">{t("schemeLabel")} (Українська)</Label>
+              <Textarea id="schemeUa" value={schemeUa} onChange={(e) => setSchemeUa(e.target.value)} placeholder={t("schemePlaceholder")} rows={4} />
             </div>
           </div>
 
@@ -596,10 +596,10 @@ export function CreateDanceForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t("schemeLabel")} (Deutsch)</Label>
+                  <Label>{t("schemeLabel")} (Українська)</Label>
                   <Textarea
-                    value={figure.scheme_de}
-                    onChange={(e) => updateFigureScheme(figureIndex, 'de', e.target.value)}
+                    value={figure.scheme_ua}
+                    onChange={(e) => updateFigureScheme(figureIndex, 'ua', e.target.value)}
                     placeholder={t("schemePlaceholder")}
                     rows={3}
                   />
@@ -772,7 +772,7 @@ export function CreateDanceForm() {
                 />
                 {tutorialDropdownOpen && (() => {
                   const options = availableTutorials.filter(tut => {
-                    const title = language === 'ru' ? tut.title_ru : tut.title_de
+                    const title = language === 'ru' ? tut.title_ru : tut.title_ua
                     return !selectedTutorialIds.includes(tut.id) &&
                       (!tutorialSearch || title.toLowerCase().includes(tutorialSearch.toLowerCase()))
                   })
@@ -780,7 +780,7 @@ export function CreateDanceForm() {
                   return (
                     <div className="absolute z-10 w-full mt-1 border rounded-md bg-popover shadow-md max-h-40 overflow-y-auto">
                       {options.map(tut => {
-                        const title = language === 'ru' ? tut.title_ru : tut.title_de
+                        const title = language === 'ru' ? tut.title_ru : tut.title_ua
                         return (
                           <button
                             key={tut.id}
@@ -801,7 +801,7 @@ export function CreateDanceForm() {
                   {selectedTutorialIds.map(id => {
                     const tut = availableTutorials.find(t => t.id === id)
                     if (!tut) return null
-                    const title = language === 'ru' ? tut.title_ru : tut.title_de
+                    const title = language === 'ru' ? tut.title_ru : tut.title_ua
                     return (
                       <span key={id} className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground rounded px-2 py-0.5 text-xs">
                         {title}
@@ -983,7 +983,7 @@ export function CreateDanceForm() {
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 {t("cancel")}
               </Button>
-              <Button type="submit" disabled={loading || uploading || (!nameDe.trim() && !nameRu.trim())}>
+              <Button type="submit" disabled={loading || uploading || (!nameUa.trim() && !nameRu.trim())}>
                 {uploading ? t("uploading") : loading ? t("creating") : t("create")}
               </Button>
             </div>

@@ -16,7 +16,7 @@ export default async function MusicPage({ searchParams }: MusicPageProps) {
     .select(`
       *,
       dance_music(
-        dances(id, name, name_de, name_ru)
+        dances(id, name, name_ua, name_ru)
       )
     `)
     .order("title")
@@ -29,14 +29,14 @@ export default async function MusicPage({ searchParams }: MusicPageProps) {
       const dances = track.dance_music?.map((dm: any) => dm.dances).filter(Boolean) || []
       return dances.some((dance: any) => 
         dance.name?.toLowerCase().includes(lowerQuery) ||
-        dance.name_de?.toLowerCase().includes(lowerQuery) ||
+        dance.name_ua?.toLowerCase().includes(lowerQuery) ||
         dance.name_ru?.toLowerCase().includes(lowerQuery)
       )
     })
   }
 
   if (error) {
-    console.error("Error fetching music:", error)
+    console.error("Error fetching music:", error.message, error.details, error.hint)
   }
 
   return (

@@ -38,7 +38,7 @@ export function DeleteDanceButton({ danceId, danceName }: DeleteDanceButtonProps
       if (result && result.success === false && result.code === 'DANCE_IN_BALLS') {
         const ballNames = Array.isArray(result.balls)
           ? result.balls
-              .map((b: any) => (language === 'ru' ? b.name_ru : language === 'de' ? (b.name_de ?? b.name) : b.name) || b.name)
+              .map((b: any) => (language === 'ru' ? b.name_ru : (b.name_ua ?? b.name)) || b.name)
               .filter(Boolean)
           : []
         const isPlural = ballNames.length > 1

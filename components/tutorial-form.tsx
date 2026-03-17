@@ -25,7 +25,7 @@ import { Pencil, Plus, Upload } from "lucide-react"
 
 interface Tutorial {
   id: string
-  title_de: string
+  title_ua: string
   title_ru: string
   type: 'video' | 'pdf' | 'image'
   video_type: 'youtube' | 'uploaded' | null
@@ -35,7 +35,7 @@ interface Tutorial {
 
 interface Category {
   id: string
-  name_de: string
+  name_ua: string
   name_ru: string
 }
 
@@ -55,7 +55,7 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, ic
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
 
-  const [titleDe, setTitleDe] = useState(tutorial?.title_de ?? "")
+  const [titleUa, setTitleDe] = useState(tutorial?.title_ua ?? "")
   const [titleRu, setTitleRu] = useState(tutorial?.title_ru ?? "")
   const [type, setType] = useState<'video' | 'pdf' | 'image'>(tutorial?.type ?? "video")
   const [videoType, setVideoType] = useState<'youtube' | 'uploaded'>(
@@ -66,7 +66,7 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, ic
   const [categoryId, setCategoryId] = useState<string>(tutorial?.category_id ?? "none")
 
   const resetForm = () => {
-    setTitleDe(tutorial?.title_de ?? "")
+    setTitleDe(tutorial?.title_ua ?? "")
     setTitleRu(tutorial?.title_ru ?? "")
     setType(tutorial?.type ?? "video")
     setVideoType(tutorial?.video_type ?? "youtube")
@@ -158,7 +158,7 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, ic
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!titleDe.trim() || !titleRu.trim()) {
+    if (!titleUa.trim() || !titleRu.trim()) {
       toast({ title: t("toastError"), description: t("titleRequired"), variant: "destructive" })
       return
     }
@@ -169,7 +169,7 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, ic
     }
 
     const data: TutorialData = {
-      title_de: titleDe.trim(),
+      title_ua: titleUa.trim(),
       title_ru: titleRu.trim(),
       type,
       video_type: type === 'video' ? videoType : null,
@@ -224,11 +224,11 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, ic
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>{t("tutorialTitleDe")}</Label>
+            <Label>{t("tutorialTitleUa")}</Label>
             <Input
-              value={titleDe}
+              value={titleUa}
               onChange={(e) => setTitleDe(e.target.value)}
-              placeholder={t("tutorialTitleDe")}
+              placeholder={t("tutorialTitleUa")}
               required
             />
           </div>
@@ -368,7 +368,7 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, ic
                 <SelectItem value="none">{t("noCategory")}</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
-                    {language === 'ru' ? cat.name_ru : cat.name_de}
+                    {language === 'ru' ? cat.name_ru : cat.name_ua}
                   </SelectItem>
                 ))}
               </SelectContent>

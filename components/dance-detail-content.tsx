@@ -11,13 +11,13 @@ import { useLanguage } from "@/components/language-provider"
 interface Dance {
   id: string
   name: string
-  name_de?: string | null
+  name_ua?: string | null
   name_ru?: string | null
   description: string | null
-  description_de?: string | null
+  description_ua?: string | null
   description_ru?: string | null
   scheme: string | null
-  scheme_de?: string | null
+  scheme_ua?: string | null
   scheme_ru?: string | null
   difficulty: string | null
   origin: string | null
@@ -49,11 +49,11 @@ interface VideoEntry {
 }
 
 interface FigureVideoEntry { id: string; video_type: 'youtube'|'uploaded'; url: string }
-interface FigureEntry { id: string; order_index: number; scheme_de?: string | null; scheme_ru?: string | null; videos: FigureVideoEntry[] }
+interface FigureEntry { id: string; order_index: number; scheme_ua?: string | null; scheme_ru?: string | null; videos: FigureVideoEntry[] }
 
 interface LinkedTutorial {
   id: string
-  title_de: string
+  title_ua: string
   title_ru: string
   url: string
   type: string
@@ -75,17 +75,17 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
   const { t, language } = useLanguage()
 
   // Get localized content
-  const displayName = language === "ru" 
-    ? (dance.name_ru || dance.name) 
-    : (dance.name_de || dance.name)
-  
-  const displayDescription = language === "ru" 
-    ? (dance.description_ru || dance.description) 
-    : (dance.description_de || dance.description)
-  
-  const displayScheme = language === "ru" 
-    ? (dance.scheme_ru || dance.scheme) 
-    : (dance.scheme_de || dance.scheme)
+  const displayName = language === "ru"
+    ? (dance.name_ru || dance.name)
+    : (dance.name_ua || dance.name)
+
+  const displayDescription = language === "ru"
+    ? (dance.description_ru || dance.description)
+    : (dance.description_ua || dance.description)
+
+  const displayScheme = language === "ru"
+    ? (dance.scheme_ru || dance.scheme)
+    : (dance.scheme_ua || dance.scheme)
 
   // Translate difficulty level
   const getDifficultyLabel = (difficulty: string | null) => {
@@ -143,7 +143,7 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
                 videoEntries={videosForEdit}
                 figureEntries={figures.map(f => ({
                   id: f.id,
-                  scheme_de: f.scheme_de || '',
+                  scheme_ua: f.scheme_ua || '',
                   scheme_ru: f.scheme_ru || '',
                   videos: f.videos.map(v => ({ id: v.id, video_type: v.video_type, url: v.url }))
                 }))}
@@ -242,7 +242,7 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
           <CardContent>
             <div className="space-y-4">
               {figures.sort((a,b)=>a.order_index-b.order_index).map((fig) => {
-                const schemeText = language === 'ru' ? (fig.scheme_ru || '') : (fig.scheme_de || '')
+                const schemeText = language === 'ru' ? (fig.scheme_ru || '') : (fig.scheme_ua || '')
                 const isOpen = openFigures[fig.id] || false
                 return (
                   <div key={fig.id} className="border rounded-md">
@@ -295,7 +295,7 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
           <CardContent>
             <ul className="space-y-2">
               {linkedTutorials.map((tut) => {
-                const title = language === 'ru' ? tut.title_ru : tut.title_de
+                const title = language === 'ru' ? tut.title_ru : tut.title_ua
                 return (
                   <li key={tut.id}>
                     <Link

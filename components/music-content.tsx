@@ -17,7 +17,7 @@ interface MusicTrack {
     dances: {
       id: string
       name: string
-      name_de?: string | null
+      name_ua?: string | null
       name_ru?: string | null
     } | null
   }>
@@ -56,7 +56,7 @@ export function MusicContent({ music, query }: MusicContentProps) {
               if (language === "ru") {
                 return dance.name_ru || dance.name
               }
-              return dance.name_de || dance.name
+              return dance.name_ua || dance.name
             })
 
             // Count how many tracks each associated dance has

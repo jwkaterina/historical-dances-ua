@@ -4,7 +4,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export interface TutorialData {
-  title_de: string
+  title_ua: string
   title_ru: string
   type: 'video' | 'pdf' | 'image'
   video_type?: 'youtube' | 'uploaded' | null
@@ -13,7 +13,7 @@ export interface TutorialData {
 }
 
 export interface CategoryData {
-  name_de: string
+  name_ua: string
   name_ru: string
 }
 
@@ -44,7 +44,7 @@ export async function createTutorial(data: TutorialData) {
       supabase
         .from('tutorials')
         .insert({
-          title_de: data.title_de,
+          title_ua: data.title_ua,
           title_ru: data.title_ru,
           type: data.type,
           video_type: data.video_type ?? null,
@@ -77,7 +77,7 @@ export async function updateTutorial(id: string, data: TutorialData) {
       supabase
         .from('tutorials')
         .update({
-          title_de: data.title_de,
+          title_ua: data.title_ua,
           title_ru: data.title_ru,
           type: data.type,
           video_type: data.video_type ?? null,
@@ -108,7 +108,7 @@ export async function createCategory(data: CategoryData) {
     const { data: category, error } = await withRetry(() =>
       supabase
         .from('tutorial_categories')
-        .insert({ name_de: data.name_de, name_ru: data.name_ru })
+        .insert({ name_ua: data.name_ua, name_ru: data.name_ru })
         .select()
         .single()
     )
@@ -134,7 +134,7 @@ export async function updateCategory(id: string, data: CategoryData) {
     const { error } = await withRetry(() =>
       supabase
         .from('tutorial_categories')
-        .update({ name_de: data.name_de, name_ru: data.name_ru })
+        .update({ name_ua: data.name_ua, name_ru: data.name_ru })
         .eq('id', id)
     )
 

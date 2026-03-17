@@ -15,9 +15,9 @@ interface BallInfoContentProps {
   ball: {
     id: string
     name: string
-    name_de: string | null
+    name_ua: string | null
     name_ru: string | null
-    info_de: string | null
+    info_ua: string | null
     info_ru: string | null
   }
 }
@@ -29,24 +29,24 @@ export function BallInfoContent({ ball }: BallInfoContentProps) {
   const { isAdmin } = useAuth()
 
   const [isEditing, setIsEditing] = useState(false)
-  const [contentDe, setContentDe] = useState<string>(ball.info_de || "")
+  const [contentUa, setContentDe] = useState<string>(ball.info_ua || "")
   const [contentRu, setContentRu] = useState<string>(ball.info_ru || "")
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
-    setContentDe(ball.info_de || "")
+    setContentDe(ball.info_ua || "")
     setContentRu(ball.info_ru || "")
-  }, [ball.info_de, ball.info_ru, ball.id])
+  }, [ball.info_ua, ball.info_ru, ball.id])
 
   const displayName =
-      language === "ru" ? (ball.name_ru || ball.name) : (ball.name_de || ball.name)
+      language === "ru" ? (ball.name_ru || ball.name) : (ball.name_ua || ball.name)
 
-  const displayContent = language === "ru" ? (ball.info_ru || "") : (ball.info_de || "")
+  const displayContent = language === "ru" ? (ball.info_ru || "") : (ball.info_ua || "")
 
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await updateBallInfo(ball.id, contentDe, contentRu)
+      await updateBallInfo(ball.id, contentUa, contentRu)
       toast({
         title: t("toastSuccess"),
         description: t("ballInfoSaved"),
@@ -93,8 +93,8 @@ export function BallInfoContent({ ball }: BallInfoContentProps) {
             {isEditing ? (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-medium mb-2">Deutsch</h3>
-                    <RichTextEditor content={contentDe} onChange={setContentDe} />
+                    <h3 className="text-lg font-medium mb-2">Українська</h3>
+                    <RichTextEditor content={contentUa} onChange={setContentDe} />
                   </div>
 
                   <div>
@@ -110,7 +110,7 @@ export function BallInfoContent({ ball }: BallInfoContentProps) {
                         variant="outline"
                         onClick={() => {
                           setIsEditing(false)
-                          setContentDe(ball.info_de || "")
+                          setContentDe(ball.info_ua || "")
                           setContentRu(ball.info_ru || "")
                         }}
                         disabled={isSaving}

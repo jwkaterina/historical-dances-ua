@@ -5,7 +5,7 @@ import { useLanguage } from "@/components/language-provider"
 
 interface Tutorial {
   id: string
-  title_de: string
+  title_ua: string
   title_ru: string
   type: 'video' | 'pdf' | 'image'
   video_type: 'youtube' | 'uploaded' | null
@@ -26,7 +26,7 @@ function getYouTubeId(url: string): string | null {
 
 export function TutorialDetailContent({ tutorial, danceId }: { tutorial: Tutorial; danceId?: string }) {
   const { t, language } = useLanguage()
-  const title = language === 'ru' ? tutorial.title_ru : tutorial.title_de
+  const title = language === 'ru' ? tutorial.title_ru : tutorial.title_ua
   const backHref = danceId ? `/dance/${danceId}` : "/tutorials"
   const backLabel = danceId ? t("backToDance") : t("backToTutorials")
 

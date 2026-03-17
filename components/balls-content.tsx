@@ -17,11 +17,11 @@ import { Suspense } from "react"
 interface Ball {
   id: string
   name: string
-  name_de: string | null
+  name_ua: string | null
   name_ru: string | null
   date: string
   place: string | null
-  place_de: string | null
+  place_ua: string | null
   place_ru: string | null
   ball_dances?: Array<{
     dances: {
@@ -34,7 +34,7 @@ interface Ball {
 interface Dance {
   id: string
   name: string
-  name_de: string | null
+  name_ua: string | null
   name_ru: string | null
   difficulty: string | null
 }
@@ -53,7 +53,7 @@ export function BallsContent({ balls, dances, query }: BallsContentProps) {
 
   // Get unique years and cities from balls
   const uniqueCities = Array.from(new Set(
-    balls.map(b => language === "ru" ? b.place_ru : b.place_de).filter(Boolean)
+    balls.map(b => language === "ru" ? b.place_ru : b.place_ua).filter(Boolean)
   )) as string[]
   const uniqueYears = Array.from(
       new Set(balls.map(b => new Date(b.date).getFullYear()))
@@ -71,7 +71,7 @@ export function BallsContent({ balls, dances, query }: BallsContentProps) {
     if (query) {
       const lowerQuery = query.toLowerCase()
       filtered = filtered.filter((ball) => {
-        const name = language === "ru" ? (ball.name_ru || ball.name) : (ball.name_de || ball.name)
+        const name = language === "ru" ? (ball.name_ru || ball.name) : (ball.name_ua || ball.name)
         return name.toLowerCase().includes(lowerQuery)
       })
     }
@@ -86,7 +86,7 @@ export function BallsContent({ balls, dances, query }: BallsContentProps) {
     // Filter by city
     if (selectedCity !== "all") {
       filtered = filtered.filter(ball => {
-        const city = language === "ru" ? ball.place_ru : ball.place_de
+        const city = language === "ru" ? ball.place_ru : ball.place_ua
         return city === selectedCity
       })
     }

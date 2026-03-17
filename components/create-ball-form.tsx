@@ -37,7 +37,7 @@ interface MusicTrack {
 interface Dance {
   id: string
   name: string
-  name_de: string | null
+  name_ua: string | null
   name_ru: string | null
   difficulty: string | null
   musicTracks?: MusicTrack[]
@@ -56,14 +56,14 @@ type SectionEntry =
   kind: "text"
   id: string
   content_ru: string
-  content_de: string
+  content_ua: string
   isEditing?: boolean
 }
 
 interface Section {
   id?: string
   name: string
-  name_de: string
+  name_ua: string
   name_ru: string
   dances: SectionEntry[]
 }
@@ -104,7 +104,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                   kind: "text" as const,
                   id: st.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
                   content_ru: st.content_ru || "",
-                  content_de: st.content_de || "",
+                  content_ua: st.content_ua || "",
                   isEditing: false,
                   order_index: st.order_index ?? 0,
                 }))
@@ -115,25 +115,25 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                     const { danceId, musicIds, musicTracks } = rest as any
                     return { kind, id, danceId, musicIds, musicTracks } as SectionEntry
                   }
-                  const { content_ru, content_de, isEditing } = rest as any
-                  return { kind, id, content_ru, content_de, isEditing } as SectionEntry
+                  const { content_ru, content_ua, isEditing } = rest as any
+                  return { kind, id, content_ru, content_ua, isEditing } as SectionEntry
                 })
             return {
               id: section.id,
               name: section.name || "",
-              name_de: section.name_de || "",
+              name_ua: section.name_ua || "",
               name_ru: section.name_ru || "",
               dances: combined,
             }
           })
     }
-    return [{ id: undefined, name: "", name_de: "", name_ru: "", dances: [] }]
+    return [{ id: undefined, name: "", name_ua: "", name_ru: "", dances: [] }]
   }, [ballToEdit])
 
-  const [nameDE, setNameDE] = useState(ballToEdit?.name_de || "")
+  const [nameUA, setNameUA] = useState(ballToEdit?.name_ua || "")
   const [nameRU, setNameRU] = useState(ballToEdit?.name_ru || "")
   const [date, setDate] = useState(ballToEdit?.date || "")
-  const [selectedCityDE, setSelectedCityDE] = useState(ballToEdit?.place_de || "")
+  const [selectedCityUA, setSelectedCityUA] = useState(ballToEdit?.place_ua || "")
   const [selectedCityRU, setSelectedCityRU] = useState(ballToEdit?.place_ru || "")
   const [sections, setSections] = useState<Section[]>(initialSections)
   const [danceSearch, setDanceSearch] = useState("")
@@ -147,14 +147,14 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
   // if (!isAdmin) return null
 
   const filteredDances = dances.filter((dance) => {
-    const displayName = language === "ru" ? (dance.name_ru || dance.name) : (dance.name_de || dance.name)
+    const displayName = language === "ru" ? (dance.name_ru || dance.name) : (dance.name_ua || dance.name)
     return displayName.toLowerCase().includes(danceSearch.toLowerCase())
   })
 
   const tStr: (key: string) => string = (key: string) => t(key as any)
 
   const addSection = () => {
-    setSections([...sections, { id: undefined, name: "", name_de: "", name_ru: "", dances: [] }])
+    setSections([...sections, { id: undefined, name: "", name_ua: "", name_ru: "", dances: [] }])
     setActiveSection(sections.length)
     setPanelOpen(prev => ({ ...prev, [sections.length]: null }))
     setPendingText(prev => ({ ...prev, [sections.length]: null }))
@@ -209,7 +209,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
   const updateTextEntry = (
     sectionIndex: number,
     danceIndex: number,
-    patch: { content_ru?: string; content_de?: string }
+    patch: { content_ru?: string; content_ua?: string }
   ) => {
     const current = [...sections[sectionIndex].dances]
     const entry = current[danceIndex]
@@ -312,10 +312,10 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
   }
 
   const resetForm = () => {
-    setNameDE(ballToEdit?.name_de || "")
+    setNameUA(ballToEdit?.name_ua || "")
     setNameRU(ballToEdit?.name_ru || "")
     setDate(ballToEdit?.date || "")
-    setSelectedCityDE(ballToEdit?.place_de || "")
+    setSelectedCityUA(ballToEdit?.place_ua || "")
     setSelectedCityRU(ballToEdit?.place_ru || "")
     setSections(initialSections)
     setDanceSearch("")
@@ -359,13 +359,13 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     }
     const current = sections[index].dances
     const id = (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`)
-    updateSection(index, "dances", [...current, { kind: "text", id, content_ru: buf.ru.trim(), content_de: buf.de.trim() }])
+    updateSection(index, "dances", [...current, { kind: "text", id, content_ru: buf.ru.trim(), content_ua: buf.de.trim() }])
     setPendingText(prev => ({ ...prev, [index]: { ru: "", de: "" } }))
     closePanel(index)
   }
 
   const handleSubmit = async () => {
-    if (!nameDE || !nameRU || !date || !selectedCityDE || !selectedCityRU) {
+    if (!nameUA || !nameRU || !date || !selectedCityUA || !selectedCityRU) {
       toast({ title: t("toastError"), description: t("fillAllFields"), variant: "destructive" })
       return
     }
@@ -382,9 +382,9 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
           orderCounter++
         } else {
           const contentRu = (e as any).content_ru?.trim() ?? ""
-          const contentDe = (e as any).content_de?.trim() ?? ""
-          if (contentRu.length > 0 || contentDe.length > 0) {
-            combinedEntries.push({ kind: "text", content_ru: contentRu, content_de: contentDe, order_index: orderCounter })
+          const contentUa = (e as any).content_ua?.trim() ?? ""
+          if (contentRu.length > 0 || contentUa.length > 0) {
+            combinedEntries.push({ kind: "text", content_ru: contentRu, content_ua: contentUa, order_index: orderCounter })
             orderCounter++
           }
         }
@@ -396,7 +396,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
       return {
         id: s.id,
         name: `Section ${idx + 1}`,
-        name_de: `Abteilung ${idx + 1}`,
+        name_ua: `Відділення ${idx + 1}`,
         name_ru: `Отделение ${idx + 1}`,
         entries: combinedEntries,
         dances: danceEntries,
@@ -406,11 +406,11 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
     setLoading(true)
     try {
       const ballData = {
-        name: nameDE,
-        name_de: nameDE,
+        name: nameUA,
+        name_ua: nameUA,
         name_ru: nameRU,
         date,
-        place_de: selectedCityDE,
+        place_ua: selectedCityUA,
         place_ru: selectedCityRU,
         sections: serializedSections,
       }
@@ -471,8 +471,8 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
               <Input id="name-ru" value={nameRU} onChange={(e) => setNameRU(e.target.value)} placeholder="напр. Новогодний бал" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="name-de">{language === "ru" ? t("ballName") : "Ballname"} \(Deutsch\)</Label>
-              <Input id="name-de" value={nameDE} onChange={(e) => setNameDE(e.target.value)} placeholder="z.B. Silvesterball" />
+              <Label htmlFor="name-ua">{t("ballName")} (Українська)</Label>
+              <Input id="name-ua" value={nameUA} onChange={(e) => setNameUA(e.target.value)} placeholder="напр. Новорічний бал" />
             </div>
           </div>
 
@@ -487,8 +487,8 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
               <Input id="city-ru" value={selectedCityRU} onChange={(e) => setSelectedCityRU(e.target.value)} placeholder="напр. Москва" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="city-de">{language === "ru" ? "Город" : "Stadt"} \(Deutsch\)</Label>
-              <Input id="city-de" value={selectedCityDE} onChange={(e) => setSelectedCityDE(e.target.value)} placeholder="z.B. Berlin" />
+              <Label htmlFor="city-ua">Місто (Українська)</Label>
+              <Input id="city-ua" value={selectedCityUA} onChange={(e) => setSelectedCityUA(e.target.value)} placeholder="напр. Київ" />
             </div>
           </div>
 
@@ -559,7 +559,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                                     <div className="flex items-center gap-2">
                                       <div className="flex-1">
                                         <div className="text-sm font-semibold text-[#6b3e26]">
-                                          {language === "ru" ? (dances.find(d => d.id === entry.danceId)?.name_ru || dances.find(d => d.id === entry.danceId)?.name) : (dances.find(d => d.id === entry.danceId)?.name_de || dances.find(d => d.id === entry.danceId)?.name)}
+                                          {language === "ru" ? (dances.find(d => d.id === entry.danceId)?.name_ru || dances.find(d => d.id === entry.danceId)?.name) : (dances.find(d => d.id === entry.danceId)?.name_ua || dances.find(d => d.id === entry.danceId)?.name)}
                                         </div>
                                         {/* music select hidden in edit mode */}
                                       </div>
@@ -575,7 +575,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                                           <div className="flex items-center gap-2">
                                             <div className="flex-1">
                                               <div className="text-sm whitespace-pre-wrap font-semibold text-[#6b3e26]">
-                                                {language === "ru" ? ((entry as any).content_ru || "") : ((entry as any).content_de || "")}
+                                                {language === "ru" ? ((entry as any).content_ru || "") : ((entry as any).content_ua || "")}
                                               </div>
                                               {/* edit text button hidden in edit mode */}
                                             </div>
@@ -644,7 +644,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                             <div className="flex items-center gap-2">
                               <div className="flex-1">
                                 <div className="text-sm font-semibold text-[#6b3e26]">
-                                  {language === "ru" ? (dances.find(d => d.id === entry.danceId)?.name_ru || dances.find(d => d.id === entry.danceId)?.name) : (dances.find(d => d.id === entry.danceId)?.name_de || dances.find(d => d.id === entry.danceId)?.name)}
+                                  {language === "ru" ? (dances.find(d => d.id === entry.danceId)?.name_ru || dances.find(d => d.id === entry.danceId)?.name) : (dances.find(d => d.id === entry.danceId)?.name_ua || dances.find(d => d.id === entry.danceId)?.name)}
                                 </div>
                                 {/* Music select visible in view mode */}
                                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -683,12 +683,12 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                                       />
                                     </div>
                                     <div className="space-y-2 pl-10">
-                                      <Label htmlFor="section-text-de">Deutsch</Label>
+                                      <Label htmlFor="section-text-ua">Українська</Label>
                                       <Input
-                                          id="section-text-de"
-                                          value={(entry as any).content_de || ""}
-                                          onChange={(e) => updateTextEntry(index, danceIndex, {content_de: e.target.value})}
-                                          placeholder={"Z.b. 'Ein Geschenktanz aus Berlin'"}
+                                          id="section-text-ua"
+                                          value={(entry as any).content_ua || ""}
+                                          onChange={(e) => updateTextEntry(index, danceIndex, {content_ua: e.target.value})}
+                                          placeholder={"Напр. 'Подарунковий танець з Берліна'"}
                                       />
                                     </div>
                                     <div className="pl-10">
@@ -707,7 +707,7 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                                     <div className="flex items-center gap-2">
                                       <div className="flex-1">
                                         <div className="text-sm whitespace-pre-wrap font-semibold text-[#6b3e26]">
-                                          {language === "ru" ? ((entry as any).content_ru || "") : ((entry as any).content_de || "")}
+                                          {language === "ru" ? ((entry as any).content_ru || "") : ((entry as any).content_ua || "")}
                                         </div>
                                         {/* Edit text visible in view mode */}
                                         <div className="mt-4">
@@ -768,15 +768,15 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor={`pending-text-de-${index}`}>Deutsch</Label>
+                              <Label htmlFor={`pending-text-ua-${index}`}>Українська</Label>
                               <Input
-                                  id={`pending-text-de-${index}`}
+                                  id={`pending-text-ua-${index}`}
                                   value={pendingText[index]?.de ?? ""}
                                   onChange={(e) => setPendingText(prev => ({
                                     ...prev,
                                     [index]: {ru: prev[index]?.ru ?? "", de: e.target.value}
                                   }))}
-                                  placeholder={"Z.b. 'Ein Geschenktanz aus Berlin'"}
+                                  placeholder={"Напр. 'Подарунковий танець з Берліна'"}
                               />
                             </div>
                           </div>

@@ -6,13 +6,13 @@ import { revalidatePath } from 'next/cache'
 interface UpdateDanceData {
   id: string
   name: string
-  name_de: string | null
+  name_ua: string | null
   name_ru: string | null
   description: string | null
-  description_de: string | null
+  description_ua: string | null
   description_ru: string | null
   scheme: string | null
-  scheme_de: string | null
+  scheme_ua: string | null
   scheme_ru: string | null
   difficulty: string | null
   origin: string | null
@@ -41,7 +41,7 @@ interface FigureVideoEntry {
 
 interface FigureEntry {
   id?: string
-  scheme_de: string | null
+  scheme_ua: string | null
   scheme_ru: string | null
   videos: FigureVideoEntry[]
 }
@@ -83,13 +83,13 @@ export async function updateDance(danceData: UpdateDanceData, musicEntries: Musi
         .from('dances')
         .update({
           name: danceData.name,
-          name_de: danceData.name_de,
+          name_ua: danceData.name_ua,
           name_ru: danceData.name_ru,
           description: danceData.description,
-          description_de: danceData.description_de,
+          description_ua: danceData.description_ua,
           description_ru: danceData.description_ru,
           scheme: danceData.scheme,
-          scheme_de: danceData.scheme_de,
+          scheme_ua: danceData.scheme_ua,
           scheme_ru: danceData.scheme_ru,
           difficulty: danceData.difficulty,
           origin: danceData.origin,
@@ -217,7 +217,7 @@ export async function updateDance(danceData: UpdateDanceData, musicEntries: Musi
           const { error: updateError } = await supabase
             .from('dance_figures')
             .update({
-              scheme_de: figure.scheme_de,
+              scheme_ua: figure.scheme_ua,
               scheme_ru: figure.scheme_ru,
               order_index: i,
             })
@@ -233,7 +233,7 @@ export async function updateDance(danceData: UpdateDanceData, musicEntries: Musi
             .from('dance_figures')
             .insert({
               dance_id: danceData.id,
-              scheme_de: figure.scheme_de,
+              scheme_ua: figure.scheme_ua,
               scheme_ru: figure.scheme_ru,
               order_index: i,
             })
@@ -492,7 +492,7 @@ export async function deleteDance(danceId: string) {
     console.log('[v0] Checking ball references for dance ID:', danceId)
     const { data: sectionsWithBalls, error: refError } = await supabase
       .from('ball_sections')
-      .select('id, ball_id, balls:ball_id ( id, name, name_de, name_ru ) , section_dances!inner ( dance_id )')
+      .select('id, ball_id, balls:ball_id ( id, name, name_ua, name_ru ) , section_dances!inner ( dance_id )')
       .eq('section_dances.dance_id', danceId)
 
     if (refError) {

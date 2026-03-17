@@ -40,7 +40,7 @@ import {
 
 interface Tutorial {
   id: string
-  title_de: string
+  title_ua: string
   title_ru: string
   type: 'video' | 'pdf' | 'image'
   video_type: 'youtube' | 'uploaded' | null
@@ -51,7 +51,7 @@ interface Tutorial {
 
 interface Category {
   id: string
-  name_de: string
+  name_ua: string
   name_ru: string
 }
 
@@ -78,34 +78,34 @@ function ManageCategoriesDialog({ categories, onOpen }: { categories: Category[]
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editDe, setEditDe] = useState("")
+  const [editUa, setEditUa] = useState("")
   const [editRu, setEditRu] = useState("")
   const [savingId, setSavingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [newDe, setNewDe] = useState("")
+  const [newUa, setNewUa] = useState("")
   const [newRu, setNewRu] = useState("")
   const [savingNew, setSavingNew] = useState(false)
 
   const startEdit = (cat: Category) => {
     setEditingId(cat.id)
-    setEditDe(cat.name_de)
+    setEditUa(cat.name_ua)
     setEditRu(cat.name_ru)
   }
 
   const cancelEdit = () => {
     setEditingId(null)
-    setEditDe("")
+    setEditUa("")
     setEditRu("")
   }
 
   const handleSave = async (id: string) => {
-    if (!editDe.trim() || !editRu.trim()) {
+    if (!editUa.trim() || !editRu.trim()) {
       toast({ title: t("toastError"), description: t("categoryNameRequired"), variant: "destructive" })
       return
     }
     setSavingId(id)
     try {
-      await updateCategory(id, { name_de: editDe.trim(), name_ru: editRu.trim() })
+      await updateCategory(id, { name_ua: editUa.trim(), name_ru: editRu.trim() })
       toast({ title: t("toastSuccess"), description: t("toastCategoryUpdated") })
       cancelEdit()
     } catch {
@@ -128,15 +128,15 @@ function ManageCategoriesDialog({ categories, onOpen }: { categories: Category[]
   }
 
   const handleCreate = async () => {
-    if (!newDe.trim() || !newRu.trim()) {
+    if (!newUa.trim() || !newRu.trim()) {
       toast({ title: t("toastError"), description: t("categoryNameRequired"), variant: "destructive" })
       return
     }
     setSavingNew(true)
     try {
-      await createCategory({ name_de: newDe.trim(), name_ru: newRu.trim() })
+      await createCategory({ name_ua: newUa.trim(), name_ru: newRu.trim() })
       toast({ title: t("toastSuccess"), description: t("toastCategoryCreated") })
-      setNewDe("")
+      setNewUa("")
       setNewRu("")
     } catch {
       toast({ title: t("toastError"), description: t("toastFailedCreateCategory"), variant: "destructive" })
@@ -159,17 +159,17 @@ function ManageCategoriesDialog({ categories, onOpen }: { categories: Category[]
             <p className="text-sm text-muted-foreground text-center py-4">{t("noCategory")}</p>
           )}
           {categories.map((cat) => {
-            const name = language === 'ru' ? cat.name_ru : cat.name_de
+            const name = language === 'ru' ? cat.name_ru : cat.name_ua
             const isEditing = editingId === cat.id
             return (
               <div key={cat.id} className="rounded-md border p-3 space-y-2">
                 {isEditing ? (
                   <>
                     <div className="space-y-1">
-                      <Label className="text-xs">{t("categoryNameDe")}</Label>
+                      <Label className="text-xs">{t("categoryNameUa")}</Label>
                       <Input
-                        value={editDe}
-                        onChange={(e) => setEditDe(e.target.value)}
+                        value={editUa}
+                        onChange={(e) => setEditUa(e.target.value)}
                         className="h-8 text-sm"
                       />
                     </div>
@@ -233,10 +233,10 @@ function ManageCategoriesDialog({ categories, onOpen }: { categories: Category[]
         <div className="border-t pt-4 space-y-3">
           <p className="text-sm font-medium">{t("createNewCategory")}</p>
           <div className="space-y-1">
-            <Label className="text-xs">{t("categoryNameDe")}</Label>
+            <Label className="text-xs">{t("categoryNameUa")}</Label>
             <Input
-              value={newDe}
-              onChange={(e) => setNewDe(e.target.value)}
+              value={newUa}
+              onChange={(e) => setNewUa(e.target.value)}
               className="h-8 text-sm"
             />
           </div>
@@ -311,7 +311,7 @@ function VideoPlayer({ tutorial }: { tutorial: Tutorial }) {
       <div className="aspect-video w-full rounded-lg overflow-hidden border">
         <iframe
           src={`https://www.youtube.com/embed/${videoId}`}
-          title={tutorial.title_de}
+          title={tutorial.title_ua}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           className="w-full h-full"
@@ -416,7 +416,7 @@ export function TutorialsContent({ tutorials, categories, query }: TutorialsCont
     if (!query) return true
     const lowerQuery = query.toLowerCase()
     return (
-      tut.title_de.toLowerCase().includes(lowerQuery) ||
+      tut.title_ua.toLowerCase().includes(lowerQuery) ||
       tut.title_ru.toLowerCase().includes(lowerQuery)
     )
   })
@@ -461,7 +461,7 @@ export function TutorialsContent({ tutorials, categories, query }: TutorialsCont
               <SelectItem value="all">{t("allCategories")}</SelectItem>
               {categories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.id}>
-                  {language === 'ru' ? cat.name_ru : cat.name_de}
+                  {language === 'ru' ? cat.name_ru : cat.name_ua}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -472,9 +472,9 @@ export function TutorialsContent({ tutorials, categories, query }: TutorialsCont
       {filtered.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2">
           {filtered.map((tutorial) => {
-            const title = language === 'ru' ? tutorial.title_ru : tutorial.title_de
+            const title = language === 'ru' ? tutorial.title_ru : tutorial.title_ua
             const category = tutorial.category_id ? categoryMap[tutorial.category_id] : null
-            const categoryName = category ? (language === 'ru' ? category.name_ru : category.name_de) : null
+            const categoryName = category ? (language === 'ru' ? category.name_ru : category.name_ua) : null
             return (
               <Card key={tutorial.id} className="transition-all hover:shadow-md relative">
                 {isAdmin && manageMode && (

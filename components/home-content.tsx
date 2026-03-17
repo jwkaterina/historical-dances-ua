@@ -17,10 +17,10 @@ import { Suspense } from "react"
 interface Dance {
   id: string
   name: string
-  name_de: string | null
+  name_ua: string | null
   name_ru: string | null
   description: string | null
-  description_de: string | null
+  description_ua: string | null
   description_ru: string | null
   difficulty: string | null
   origin: string | null
@@ -38,10 +38,10 @@ export function HomeContent({ dances, query }: HomeContentProps) {
   // Transform dances to show localized names
   const localizedDances = dances.map((dance) => ({
     ...dance,
-    displayName: language === "ru" ? (dance.name_ru || dance.name) : (dance.name_de || dance.name),
-    displayDescription: language === "ru" 
-      ? (dance.description_ru || dance.description) 
-      : (dance.description_de || dance.description),
+    displayName: language === "ru" ? (dance.name_ru || dance.name) : (dance.name_ua || dance.name),
+    displayDescription: language === "ru"
+      ? (dance.description_ru || dance.description)
+      : (dance.description_ua || dance.description),
   }))
 
   // Filter by difficulty

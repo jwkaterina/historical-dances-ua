@@ -32,7 +32,7 @@ interface MusicTrack {
 interface Dance {
   id: string
   name: string
-  name_de: string | null
+  name_ua: string | null
   name_ru: string | null
   difficulty: string | null
   musicTracks?: MusicTrack[]
@@ -49,13 +49,13 @@ interface SectionText {
   id: string
   order_index: number
   content_ru: string
-  content_de: string
+  content_ua: string
 }
 
 interface Section {
   id: string
   name: string
-  name_de: string
+  name_ua: string
   name_ru: string
   order_index: number
   section_dances: SectionDance[]
@@ -66,11 +66,11 @@ interface BallDetailContentProps {
   ball: {
     id: string
     name: string
-    name_de: string | null
+    name_ua: string | null
     name_ru: string | null
     date: string
     place: string | null
-    place_de: string | null
+    place_ua: string | null
     place_ru: string | null
     ball_sections: Section[]
   }
@@ -85,11 +85,11 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
 
   const displayName = language === "ru"
       ? (ball.name_ru || ball.name)
-      : (ball.name_de || ball.name)
+      : (ball.name_ua || ball.name)
 
   const displayPlace = language === "ru"
       ? (ball.place_ru || ball.place || "")
-      : (ball.place_de || ball.place || "")
+      : (ball.place_ua || ball.place || "")
   const formattedDate = formatDate(ball.date, language)
 
   const getDifficultyLabel = (difficulty: string | null) => {
@@ -106,19 +106,19 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
   const getDisplayDanceName = (dance: Dance) => {
     return language === "ru"
         ? (dance.name_ru || dance.name)
-        : (dance.name_de || dance.name)
+        : (dance.name_ua || dance.name)
   }
 
   const getDisplaySectionName = (index: number) => {
-    return language === "ru" ? `Отделение ${index + 1}` : `Abteilung ${index + 1}`
+    return language === "ru" ? `Відділення ${index + 1}` : `Відділення ${index + 1}`
   }
 
   // Display section text by current language with safe fallbacks
   const getDisplayText = (text: any) => {
     if (!text) return ""
     const ru = (text as any).content_ru ?? (text as any).ru ?? (text as any).text_ru ?? (text as any).content
-    const de = (text as any).content_de ?? (text as any).de ?? (text as any).text_de ?? (text as any).content
-    return language === "ru" ? (ru ?? "") : (de ?? "")
+    const ua = (text as any).content_ua ?? (text as any).ua ?? (text as any).text_ua ?? (text as any).content
+    return language === "ru" ? (ru ?? "") : (ua ?? "")
   }
 
   const handleDelete = async () => {
@@ -231,7 +231,7 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
                   id: st.id,
                   order_index: st.order_index,
                   content_ru: st.content_ru,
-                  content_de: st.content_de,
+                  content_ua: st.content_ua,
                 }))
 
                 const combined = [...danceEntries, ...textEntries].sort((a, b) => a.order_index - b.order_index)

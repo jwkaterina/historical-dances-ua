@@ -12,7 +12,7 @@ export default async function TutorialsPage({ searchParams }: TutorialsPageProps
 
   const [{ data: tutorials, error }, { data: categories }] = await Promise.all([
     supabase.from("tutorials").select("*").order("created_at", { ascending: false }),
-    supabase.from("tutorial_categories").select("*").order("name_de"),
+    supabase.from("tutorial_categories").select("*").order("name_ua"),
   ])
 
   if (error) {

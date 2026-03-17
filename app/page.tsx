@@ -14,7 +14,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   if (query) {
     // Search in all name fields (base, German, Russian)
-    queryBuilder = queryBuilder.or(`name.ilike.%${query}%,name_de.ilike.%${query}%,name_ru.ilike.%${query}%`)
+    queryBuilder = queryBuilder.or(`name.ilike.%${query}%,name_ua.ilike.%${query}%,name_ru.ilike.%${query}%`)
   }
 
   const { data: dances, error } = await queryBuilder.order("name")

@@ -50,7 +50,7 @@ interface FigureVideoFormEntry {
 
 interface FigureFormEntry {
   id?: string
-  scheme_de: string
+  scheme_ua: string
   scheme_ru: string
   videos: FigureVideoFormEntry[]
 }
@@ -58,13 +58,13 @@ interface FigureFormEntry {
 interface Dance {
   id: string
   name: string
-  name_de?: string | null
+  name_ua?: string | null
   name_ru?: string | null
   description: string | null
-  description_de?: string | null
+  description_ua?: string | null
   description_ru?: string | null
   scheme: string | null
-  scheme_de?: string | null
+  scheme_ua?: string | null
   scheme_ru?: string | null
   difficulty: string | null
   youtube_url: string | null
@@ -87,15 +87,15 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [nameDe, setNameDe] = useState(dance.name_de || dance.name || "")
-  const [descriptionDe, setDescriptionDe] = useState(dance.description_de || dance.description || "")
-  const [schemeDe, setSchemeDe] = useState(dance.scheme_de || dance.scheme || "")
+  const [nameUa, setNameUa] = useState(dance.name_ua || dance.name || "")
+  const [descriptionUa, setDescriptionUa] = useState(dance.description_ua || dance.description || "")
+  const [schemeUa, setSchemeUa] = useState(dance.scheme_ua || dance.scheme || "")
   const [nameRu, setNameRu] = useState(dance.name_ru || "")
   const [descriptionRu, setDescriptionRu] = useState(dance.description_ru || "")
   const [schemeRu, setSchemeRu] = useState(dance.scheme_ru || "")
   const [difficulty, setDifficulty] = useState(dance.difficulty || "")
   const [selectedTutorialIds, setSelectedTutorialIds] = useState<string[]>(initialTutorialIds)
-  const [availableTutorials, setAvailableTutorials] = useState<{ id: string; title_de: string; title_ru: string }[]>([])
+  const [availableTutorials, setAvailableTutorials] = useState<{ id: string; title_ua: string; title_ru: string }[]>([])
   const [tutorialSearch, setTutorialSearch] = useState("")
   const [tutorialDropdownOpen, setTutorialDropdownOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -133,9 +133,9 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
   
   // Reset all form fields to original values
   const resetForm = () => {
-    setNameDe(dance.name_de || dance.name || "")
-    setDescriptionDe(dance.description_de || dance.description || "")
-    setSchemeDe(dance.scheme_de || dance.scheme || "")
+    setNameUa(dance.name_ua || dance.name || "")
+    setDescriptionUa(dance.description_ua || dance.description || "")
+    setSchemeUa(dance.scheme_ua || dance.scheme || "")
     setNameRu(dance.name_ru || "")
     setDescriptionRu(dance.description_ru || "")
     setSchemeRu(dance.scheme_ru || "")
@@ -154,7 +154,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
   
   const fetchTutorials = async () => {
     const supabase = createClient()
-    const { data } = await supabase.from('tutorials').select('id, title_de, title_ru').order('title_de')
+    const { data } = await supabase.from('tutorials').select('id, title_ua, title_ru').order('title_ua')
     if (data) setAvailableTutorials(data)
   }
 
@@ -212,7 +212,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
 
   // Figure entry functions
   const addFigure = () => {
-    setFigureFormEntries([...figureFormEntries, { scheme_de: '', scheme_ru: '', videos: [] }])
+    setFigureFormEntries([...figureFormEntries, { scheme_ua: '', scheme_ru: '', videos: [] }])
   }
 
   const removeFigure = (index: number) => {
@@ -222,10 +222,10 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
     setFigureVideoFiles(newFigureVideoFiles)
   }
 
-  const updateFigureScheme = (index: number, lang: 'de' | 'ru', value: string) => {
+  const updateFigureScheme = (index: number, lang: 'ua' | 'ru', value: string) => {
     const updated = [...figureFormEntries]
-    if (lang === 'de') {
-      updated[index].scheme_de = value
+    if (lang === 'ua') {
+      updated[index].scheme_ua = value
     } else {
       updated[index].scheme_ru = value
     }
@@ -362,7 +362,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
     e.preventDefault()
     
     // Validate that both language names are provided
-    if (!nameDe.trim() || !nameRu.trim()) {
+    if (!nameUa.trim() || !nameRu.trim()) {
       toast({
         title: t("toastError"),
         description: t("toastNameRequiredBothLanguages"),
@@ -422,7 +422,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
       )
 
       // Get the dance name based on current language for auto-title
-      const danceName = language === "ru" ? (nameRu || nameDe) : (nameDe || nameRu)
+      const danceName = language === "ru" ? (nameRu || nameUa) : (nameUa || nameRu)
 
       // Filter to only include music entries that have audio files
       const musicWithAudio = musicEntriesWithAudio.filter((m) => m.audio_url && m.audio_url.trim() !== '')
@@ -455,7 +455,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
           const validVideos = processedVideos.filter(v => v.url && v.url.trim() !== '')
           return {
             id: figure.id,
-            scheme_de: figure.scheme_de || null,
+            scheme_ua: figure.scheme_ua || null,
             scheme_ru: figure.scheme_ru || null,
             videos: validVideos
           }
@@ -466,14 +466,14 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
       await updateDance(
         {
           id: dance.id,
-          name: nameDe || nameRu,
-          name_de: nameDe || null,
+          name: nameUa || nameRu,
+          name_ua: nameUa || null,
           name_ru: nameRu || null,
-          description: descriptionDe || descriptionRu || null,
-          description_de: descriptionDe || null,
+          description: descriptionUa || descriptionRu || null,
+          description_ua: descriptionUa || null,
           description_ru: descriptionRu || null,
-          scheme: schemeDe || schemeRu || null,
-          scheme_de: schemeDe || null,
+          scheme: schemeUa || schemeRu || null,
+          scheme_ua: schemeUa || null,
           scheme_ru: schemeRu || null,
           difficulty: difficulty || null,
           origin: dance.origin ?? null,
@@ -532,11 +532,11 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-nameDe">{t("danceName")} (Deutsch) *</Label>
+              <Label htmlFor="edit-nameUa">{t("danceName")} (Українська) *</Label>
               <Input
-                id="edit-nameDe"
-                value={nameDe}
-                onChange={(e) => setNameDe(e.target.value)}
+                id="edit-nameUa"
+                value={nameUa}
+                onChange={(e) => setNameUa(e.target.value)}
                 placeholder={t("danceNamePlaceholder")}
               />
             </div>
@@ -553,11 +553,11 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-descriptionDe">{t("descriptionLabel")} (Deutsch)</Label>
+              <Label htmlFor="edit-descriptionUa">{t("descriptionLabel")} (Українська)</Label>
               <Textarea
-                id="edit-descriptionDe"
-                value={descriptionDe}
-                onChange={(e) => setDescriptionDe(e.target.value)}
+                id="edit-descriptionUa"
+                value={descriptionUa}
+                onChange={(e) => setDescriptionUa(e.target.value)}
                 placeholder={t("descriptionPlaceholder")}
                 rows={2}
               />
@@ -575,11 +575,11 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-schemeDe">{t("schemeLabel")} (Deutsch)</Label>
+              <Label htmlFor="edit-schemeUa">{t("schemeLabel")} (Українська)</Label>
               <Textarea
-                id="edit-schemeDe"
-                value={schemeDe}
-                onChange={(e) => setSchemeDe(e.target.value)}
+                id="edit-schemeUa"
+                value={schemeUa}
+                onChange={(e) => setSchemeUa(e.target.value)}
                 placeholder={t("schemePlaceholder")}
                 rows={4}
               />
@@ -628,10 +628,10 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t("schemeLabel")} (Deutsch)</Label>
+                  <Label>{t("schemeLabel")} (Українська)</Label>
                   <Textarea
-                    value={figure.scheme_de}
-                    onChange={(e) => updateFigureScheme(figureIndex, 'de', e.target.value)}
+                    value={figure.scheme_ua}
+                    onChange={(e) => updateFigureScheme(figureIndex, 'ua', e.target.value)}
                     placeholder={t("schemePlaceholder")}
                     rows={3}
                   />
@@ -818,7 +818,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
                 />
                 {tutorialDropdownOpen && (() => {
                   const options = availableTutorials.filter(tut => {
-                    const title = language === 'ru' ? tut.title_ru : tut.title_de
+                    const title = language === 'ru' ? tut.title_ru : tut.title_ua
                     return !selectedTutorialIds.includes(tut.id) &&
                       (!tutorialSearch || title.toLowerCase().includes(tutorialSearch.toLowerCase()))
                   })
@@ -826,7 +826,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
                   return (
                     <div className="absolute z-10 w-full mt-1 border rounded-md bg-popover shadow-md max-h-40 overflow-y-auto">
                       {options.map(tut => {
-                        const title = language === 'ru' ? tut.title_ru : tut.title_de
+                        const title = language === 'ru' ? tut.title_ru : tut.title_ua
                         return (
                           <button
                             key={tut.id}
@@ -847,7 +847,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
                   {selectedTutorialIds.map(id => {
                     const tut = availableTutorials.find(t => t.id === id)
                     if (!tut) return null
-                    const title = language === 'ru' ? tut.title_ru : tut.title_de
+                    const title = language === 'ru' ? tut.title_ru : tut.title_ua
                     return (
                       <span key={id} className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground rounded px-2 py-0.5 text-xs">
                         {title}
@@ -1104,7 +1104,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {t("cancel")}
             </Button>
-            <Button type="submit" disabled={loading || uploading || (!nameDe.trim() && !nameRu.trim())}>
+            <Button type="submit" disabled={loading || uploading || (!nameUa.trim() && !nameRu.trim())}>
               {uploading ? t("uploading") : loading ? t("saving") : t("save")}
             </Button>
           </div>

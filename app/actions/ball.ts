@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
-interface SectionText {content_de: string
+interface SectionText {content_ua: string
   content_ru: string
 }
 
@@ -15,7 +15,7 @@ interface SectionDanceEntry {
 interface Section {
   id?: string
   name: string
-  name_de: string
+  name_ua: string
   name_ru: string
   dances?: SectionDanceEntry[]
   texts?: SectionText[]
@@ -24,17 +24,17 @@ interface Section {
     order_index: number
     danceId?: string
     musicIds?: string[]
-    content_de?: string
+    content_ua?: string
     content_ru?: string
   }>
 }
 
 interface BallData {
   name: string
-  name_de: string
+  name_ua: string
   name_ru: string
   date: string
-  place_de: string
+  place_ua: string
   place_ru: string
   sections: Section[]
 }
@@ -49,17 +49,17 @@ export async function getBalls() {
             `
         id,
         name,
-        name_de,
+        name_ua,
         name_ru,
         date,
         place,
-        place_de,
+        place_ua,
         place_ru,
         created_at,
         ball_sections (
           id,
           name,
-          name_de,
+          name_ua,
           name_ru,
           order_index,
           section_dances (
@@ -70,7 +70,7 @@ export async function getBalls() {
             dances:dance_id (
               id,
               name,
-              name_de,
+              name_ua,
               name_ru,
               difficulty
             )
@@ -78,7 +78,7 @@ export async function getBalls() {
           section_texts (
             id,
             order_index,
-            content_de,
+            content_ua,
             content_ru
           )
         )
@@ -115,20 +115,20 @@ export async function getBallById(id: string) {
             `
         id,
         name,
-        name_de,
+        name_ua,
         name_ru,
         date,
         place,
-        place_de,
+        place_ua,
         place_ru,
         info_ru,
-        info_de,
+        info_ua,
         created_at,
         user_id,
         ball_sections (
           id,
           name,
-          name_de,
+          name_ua,
           name_ru,
           order_index,
           section_dances (
@@ -139,14 +139,14 @@ export async function getBallById(id: string) {
             dances:dance_id (
               id,
               name,
-              name_de,
+              name_ua,
               name_ru,
               difficulty
             )
           ),section_texts (
             id,
             order_index,
-            content_de,
+            content_ua,
             content_ru
           )
         )
@@ -179,11 +179,11 @@ export async function createBall(ballData: BallData) {
         .from("balls")
         .insert({
           name: ballData.name,
-          name_de: ballData.name_de,
+          name_ua: ballData.name_ua,
           name_ru: ballData.name_ru,
           date: ballData.date,
-          place: ballData.place_de,
-          place_de: ballData.place_de,
+          place: ballData.place_ua,
+          place_ua: ballData.place_ua,
           place_ru: ballData.place_ru,
           user_id: user.id,
         })
@@ -200,7 +200,7 @@ export async function createBall(ballData: BallData) {
               ball_id: ball.id,
               order_index: sIdx,
               name: section.name,
-              name_de: section.name_de,
+              name_ua: section.name_ua,
               name_ru: section.name_ru,
             })
             .select()
@@ -247,7 +247,7 @@ export async function createBall(ballData: BallData) {
               .map((e: any) => ({
                 section_id: sectionData.id,
                 order_index: e.order_index,
-                content_de: (e.content_de ?? e.content ?? '').trim(),
+                content_ua: (e.content_ua ?? e.content ?? '').trim(),
                 content_ru: (e.content_ru ?? e.content ?? '').trim(),
               }))
           if (textsToInsert.length > 0) {
@@ -279,11 +279,11 @@ export async function updateBall(id: string, ballData: BallData) {
         .from("balls")
         .update({
           name: ballData.name,
-          name_de: ballData.name_de,
+          name_ua: ballData.name_ua,
           name_ru: ballData.name_ru,
           date: ballData.date,
-          place: ballData.place_de,
-          place_de: ballData.place_de,
+          place: ballData.place_ua,
+          place_ua: ballData.place_ua,
           place_ru: ballData.place_ru,
         })
         .eq("id", id)
@@ -326,7 +326,7 @@ export async function updateBall(id: string, ballData: BallData) {
             ball_id: id,
             order_index: sIdx,
             name: section.name,
-            name_de: section.name_de,
+            name_ua: section.name_ua,
             name_ru: section.name_ru,
           })
           .select()
@@ -367,7 +367,7 @@ export async function updateBall(id: string, ballData: BallData) {
             .map((e: any) => ({
               section_id: sectionData.id,
               order_index: e.order_index,
-              content_de: (e.content_de ?? e.content ?? '').trim(),
+              content_ua: (e.content_ua ?? e.content ?? '').trim(),
               content_ru: (e.content_ru ?? e.content ?? '').trim(),
             }))
         if (textsToInsert.length > 0) {
@@ -394,7 +394,7 @@ export async function getDancesForBall() {
         .select(`
         id,
         name,
-        name_de,
+        name_ua,
         name_ru,
         difficulty,
         dance_music (
@@ -446,7 +446,7 @@ export async function deleteBall(id: string) {
 }
 
 // File: `app/actions/ball.ts`
-export async function updateBallInfo(id: string, info_de?: string, info_ru?: string) {
+export async function updateBallInfo(id: string, info_ua?: string, info_ru?: string) {
   try {
     const supabase = await createClient()
 
@@ -456,7 +456,7 @@ export async function updateBallInfo(id: string, info_de?: string, info_ru?: str
     if (!user) throw new Error("Not authenticated")
 
     const payload: Record<string, any> = {}
-    if (typeof info_de !== "undefined") payload.info_de = (info_de ?? "").trim()
+    if (typeof info_ua !== "undefined") payload.info_ua = (info_ua ?? "").trim()
     if (typeof info_ru !== "undefined") payload.info_ru = (info_ru ?? "").trim()
 
     if (Object.keys(payload).length === 0) {
