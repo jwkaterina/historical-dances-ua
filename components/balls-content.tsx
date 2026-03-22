@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useLanguage } from "@/components/language-provider"
+import { useAuth } from "@/hooks/use-auth"
 import { BallList } from "@/components/ball-list"
 import { CreateBallForm } from "@/components/create-ball-form"
 import { SearchInput } from "@/components/search-input"
@@ -47,6 +48,7 @@ interface BallsContentProps {
 
 export function BallsContent({ balls, dances, query }: BallsContentProps) {
   const { t, language } = useLanguage()
+  const { isAdmin } = useAuth()
   const [filteredBalls, setFilteredBalls] = useState<Ball[]>(balls)
   const [selectedCity, setSelectedCity] = useState<string>("all")
   const [selectedYear, setSelectedYear] = useState<string>("all");
@@ -102,7 +104,7 @@ export function BallsContent({ balls, dances, query }: BallsContentProps) {
           <h1 className="text-3xl font-bold text-foreground">{t("ballsTitle")}</h1>
           <p className="mt-2 text-muted-foreground">{t("ballsDescription")}</p>
         </div>
-        <CreateBallForm dances={dances} />
+        {isAdmin && <CreateBallForm dances={dances} />}
       </div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex-1">

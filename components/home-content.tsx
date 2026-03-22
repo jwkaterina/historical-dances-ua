@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useLanguage } from "@/components/language-provider"
+import { useAuth } from "@/hooks/use-auth"
 import { DanceList } from "@/components/dance-list"
 import { CreateDanceForm } from "@/components/create-dance-form"
 import { SearchInput } from "@/components/search-input"
@@ -33,6 +34,7 @@ interface HomeContentProps {
 
 export function HomeContent({ dances, query }: HomeContentProps) {
   const { t, language } = useLanguage()
+  const { isAdmin } = useAuth()
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all")
 
   // Transform dances to show localized names
@@ -56,7 +58,7 @@ export function HomeContent({ dances, query }: HomeContentProps) {
           <h1 className="text-3xl font-bold text-foreground">{t("dancesTitle")}</h1>
           <p className="mt-2 text-muted-foreground">{t("dancesDescription")}</p>
         </div>
-        <CreateDanceForm />
+        {isAdmin && <CreateDanceForm />}
       </div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex-1">

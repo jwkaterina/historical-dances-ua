@@ -197,6 +197,14 @@ export const translations = {
     unspecifiedError: "Сталася невідома помилка",
     passwordsNoMatch: "Паролі не збігаються",
     loginToCreate: "Увійдіть для створення",
+    errorInvalidCredentials: "Невірний email або пароль. Якщо у вас ще немає акаунту —",
+    errorInvalidCredentialsRegisterLink: "зареєструйтесь",
+    errorEmailNotConfirmed: "Email не підтверджено. Перевірте вашу пошту та перейдіть за посиланням для підтвердження",
+    errorUserAlreadyExists: "Користувач з таким email вже існує",
+    errorWeakPassword: "Пароль занадто короткий. Мінімум 6 символів",
+    errorInvalidEmail: "Невірний формат email адреси",
+    errorRateLimit: "Забагато спроб. Зачекайте трохи та спробуйте ще раз",
+    errorDefault: "Сталася помилка. Спробуйте ще раз",
 
     // Toast messages
     toastError: "Помилка",
@@ -487,6 +495,14 @@ export const translations = {
     unspecifiedError: "Произошла неизвестная ошибка",
     passwordsNoMatch: "Пароли не совпадают",
     loginToCreate: "Войдите для создания",
+    errorInvalidCredentials: "Неверный email или пароль. Если у вас нет аккаунта —",
+    errorInvalidCredentialsRegisterLink: "зарегистрируйтесь",
+    errorEmailNotConfirmed: "Email не подтверждён. Проверьте вашу почту и перейдите по ссылке для подтверждения",
+    errorUserAlreadyExists: "Пользователь с таким email уже существует",
+    errorWeakPassword: "Пароль слишком короткий. Минимум 6 символов",
+    errorInvalidEmail: "Неверный формат email адреса",
+    errorRateLimit: "Слишком много попыток. Подождите немного и попробуйте снова",
+    errorDefault: "Произошла ошибка. Попробуйте снова",
 
     // Toast messages
     toastError: "Ошибка",

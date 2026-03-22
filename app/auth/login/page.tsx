@@ -23,15 +23,31 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [isCredentialsError, setIsCredentialsError] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { t } = useLanguage()
+
+  const isCredentials = (message: string) => {
+    const msg = message.toLowerCase()
+    return msg.includes("invalid login credentials") || msg.includes("invalid_credentials") || msg.includes("invalid email or password")
+  }
+
+  const getErrorMessage = (message: string): string => {
+    const msg = message.toLowerCase()
+    if (isCredentials(message)) return t("errorInvalidCredentials")
+    if (msg.includes("email not confirmed") || msg.includes("email_not_confirmed")) return t("errorEmailNotConfirmed")
+    if (msg.includes("rate limit") || msg.includes("too many") || msg.includes("security purposes")) return t("errorRateLimit")
+    if (msg.includes("invalid format") || msg.includes("invalid email")) return t("errorInvalidEmail")
+    return t("errorDefault")
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     const supabase = createClient()
     setIsLoading(true)
     setError(null)
+    setIsCredentialsError(false)
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -42,7 +58,12 @@ export default function LoginPage() {
       router.push("/")
       router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : t("authError"))
+      if (error instanceof Error) {
+        setIsCredentialsError(isCredentials(error.message))
+        setError(getErrorMessage(error.message))
+      } else {
+        setError(t("errorDefault"))
+      }
     } finally {
       setIsLoading(false)
     }
@@ -82,7 +103,16 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
-                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  {error && (
+                    <p className="text-sm text-destructive">
+                      {error}{" "}
+                      {isCredentialsError && (
+                        <Link href="/auth/sign-up" className="underline underline-offset-4">
+                          {t("errorInvalidCredentialsRegisterLink")}
+                        </Link>
+                      )}
+                    </p>
+                  )}
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? t("loggingIn") : t("login")}
                   </Button>

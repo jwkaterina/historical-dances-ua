@@ -28,6 +28,16 @@ export default function SignUpPage() {
   const router = useRouter()
   const { t } = useLanguage()
 
+  const getErrorMessage = (message: string): string => {
+    const msg = message.toLowerCase()
+    if (msg.includes("user already registered") || msg.includes("already been registered") || msg.includes("already exists")) return t("errorUserAlreadyExists")
+    if (msg.includes("password") && (msg.includes("short") || msg.includes("characters") || msg.includes("weak"))) return t("errorWeakPassword")
+    if (msg.includes("email not confirmed") || msg.includes("email_not_confirmed")) return t("errorEmailNotConfirmed")
+    if (msg.includes("rate limit") || msg.includes("too many") || msg.includes("security purposes")) return t("errorRateLimit")
+    if (msg.includes("invalid format") || msg.includes("unable to validate email") || msg.includes("invalid email")) return t("errorInvalidEmail")
+    return t("errorDefault")
+  }
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     const supabase = createClient()
@@ -41,7 +51,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -51,9 +61,15 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
+      // When email enumeration protection is on, Supabase returns a fake user
+      // with empty identities instead of an error for already-registered emails
+      if (data.user && data.user.identities?.length === 0) {
+        setError(t("errorUserAlreadyExists"))
+        return
+      }
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : t("authError"))
+      setError(error instanceof Error ? getErrorMessage(error.message) : t("errorDefault"))
     } finally {
       setIsLoading(false)
     }

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EditDanceForm } from "@/components/edit-dance-form"
 import { DeleteDanceButton } from "@/components/delete-dance-button"
 import { useLanguage } from "@/components/language-provider"
+import { useAuth } from "@/hooks/use-auth"
 
 interface Dance {
   id: string
@@ -73,6 +74,7 @@ interface DanceDetailContentProps {
 
 export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, videosForEdit, ballId, figures = [], linkedTutorials = [], linkedTutorialIds = [] }: DanceDetailContentProps) {
   const { t, language } = useLanguage()
+  const { isAdmin } = useAuth()
 
   // Get localized content
   const displayName = language === "ru"
@@ -135,25 +137,27 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
               </Badge>
             )}
           </div>
-          <div className="flex w-full gap-2 sm:justify-end">
-            <div className="flex-1 sm:flex-none">
-              <EditDanceForm
-                dance={dance}
-                musicTracks={musicForEdit}
-                videoEntries={videosForEdit}
-                figureEntries={figures.map(f => ({
-                  id: f.id,
-                  scheme_ua: f.scheme_ua || '',
-                  scheme_ru: f.scheme_ru || '',
-                  videos: f.videos.map(v => ({ id: v.id, video_type: v.video_type, url: v.url }))
-                }))}
-                initialTutorialIds={linkedTutorialIds}
-              />
+          {isAdmin && (
+            <div className="flex w-full gap-2 sm:justify-end">
+              <div className="flex-1 sm:flex-none">
+                <EditDanceForm
+                  dance={dance}
+                  musicTracks={musicForEdit}
+                  videoEntries={videosForEdit}
+                  figureEntries={figures.map(f => ({
+                    id: f.id,
+                    scheme_ua: f.scheme_ua || '',
+                    scheme_ru: f.scheme_ru || '',
+                    videos: f.videos.map(v => ({ id: v.id, video_type: v.video_type, url: v.url }))
+                  }))}
+                  initialTutorialIds={linkedTutorialIds}
+                />
+              </div>
+              <div className="flex-1 sm:flex-none">
+                <DeleteDanceButton danceId={dance.id} danceName={displayName} />
+              </div>
             </div>
-            <div className="flex-1 sm:flex-none">
-              <DeleteDanceButton danceId={dance.id} danceName={displayName} />
-            </div>
-          </div>
+          )}
         </div>
         {dance.origin && (
           <p className="text-muted-foreground">{t("origin")}: {dance.origin}</p>
