@@ -2,7 +2,6 @@
 
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -23,11 +22,6 @@ export default function SignUpSuccessPage() {
               <CardTitle className="text-2xl">{t("signUpSuccess")}</CardTitle>
               <CardDescription>{t("checkEmail")}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {t("signUpSuccessMessage")}
-              </p>
-            </CardContent>
           </Card>
         </div>
       </div>
