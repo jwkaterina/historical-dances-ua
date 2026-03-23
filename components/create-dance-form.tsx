@@ -311,6 +311,16 @@ export function CreateDanceForm() {
       return
     }
 
+    // Validate difficulty is selected
+    if (!difficulty) {
+      toast({
+        title: t("toastError"),
+        description: t("toastDifficultyRequired"),
+        variant: "destructive",
+      })
+      return
+    }
+
     // If multiple tracks, validate that all tracks have titles
     if (showTitleFields) {
       const hasEmptyTitles = musicEntries.some((m, i) => 
@@ -537,6 +547,20 @@ export function CreateDanceForm() {
               <Input id="nameUa" value={nameUa} onChange={(e) => setNameUa(e.target.value)} placeholder={t("danceNamePlaceholder")} />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="difficulty">{t("difficulty")} *</Label>
+              <Select value={difficulty} onValueChange={setDifficulty}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("selectDifficulty")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Beginner">{t("beginner")}</SelectItem>
+                  <SelectItem value="Intermediate">{t("intermediate")}</SelectItem>
+                  <SelectItem value="Advanced">{t("advanced")}</SelectItem>
+                  <SelectItem value="Expert">{t("expert")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="descriptionRu">{t("descriptionLabel")} (Русский)</Label>
               <Textarea id="descriptionRu" value={descriptionRu} onChange={(e) => setDescriptionRu(e.target.value)} placeholder={t("descriptionPlaceholder")} rows={2} />
             </div>
@@ -743,23 +767,6 @@ export function CreateDanceForm() {
           </div>
 
           <div className="space-y-4">
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="difficulty">{t("difficulty")}</Label>
-                <Select value={difficulty} onValueChange={setDifficulty}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("selectDifficulty")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Beginner">{t("beginner")}</SelectItem>
-                    <SelectItem value="Intermediate">{t("intermediate")}</SelectItem>
-                    <SelectItem value="Advanced">{t("advanced")}</SelectItem>
-                    <SelectItem value="Expert">{t("expert")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
             <div className="space-y-2">
               <Label>{t("linkedTutorials")}</Label>
               <div className="relative">

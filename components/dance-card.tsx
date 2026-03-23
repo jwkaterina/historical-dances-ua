@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { DifficultyStars } from "@/components/difficulty-stars"
 import { FavoriteButton } from "@/components/favorite-button"
 import { DanceListSelector } from "@/components/dance-list-selector"
 import { useLanguage } from "@/components/language-provider"
@@ -24,33 +24,21 @@ export function DanceCard({ dance }: DanceCardProps) {
   const displayName = dance.displayName || dance.name
   const displayDescription = dance.displayDescription || dance.description
 
-  // Translate difficulty level
-  const getDifficultyLabel = (difficulty: string | null) => {
-    if (!difficulty) return null
-    const difficultyMap: Record<string, string> = {
-      "Beginner": t("beginner"),
-      "Intermediate": t("intermediate"),
-      "Advanced": t("advanced"),
-      "Expert": t("expert"),
-    }
-    return difficultyMap[difficulty] || difficulty
-  }
-
   return (
     <Link href={`/dance/${dance.id}`}>
       <Card className="h-full transition-all hover:shadow-md hover:border-primary/30">
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg text-foreground">{displayName}</CardTitle>
-            <div className="flex items-center gap-1 shrink-0">
-              {dance.difficulty && (
-                <Badge variant="secondary" className="text-xs shrink-0">
-                  {getDifficultyLabel(dance.difficulty)}
-                </Badge>
-              )}
-              <FavoriteButton danceId={dance.id} />
-              <DanceListSelector danceId={dance.id} />
+          <div>
+            <div className="flex items-center justify-between">
+              {dance.difficulty ? (
+                <DifficultyStars difficulty={dance.difficulty} />
+              ) : <span />}
+              <div className="flex items-center gap-1 shrink-0">
+                <FavoriteButton danceId={dance.id} />
+                <DanceListSelector danceId={dance.id} />
+              </div>
             </div>
+            <CardTitle className="text-lg text-foreground mt-1">{displayName}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>

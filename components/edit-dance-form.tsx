@@ -371,6 +371,16 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
       return
     }
 
+    // Validate difficulty is selected
+    if (!difficulty) {
+      toast({
+        title: t("toastError"),
+        description: t("toastDifficultyRequired"),
+        variant: "destructive",
+      })
+      return
+    }
+
     // If multiple tracks, validate that all tracks have titles
     if (showTitleFields) {
       const hasEmptyTitles = musicEntries.some((m, i) => 
@@ -539,6 +549,21 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
                 onChange={(e) => setNameUa(e.target.value)}
                 placeholder={t("danceNamePlaceholder")}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-difficulty">{t("difficulty")} *</Label>
+              <Select value={difficulty} onValueChange={setDifficulty}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("selectDifficulty")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Beginner">{t("beginner")}</SelectItem>
+                  <SelectItem value="Intermediate">{t("intermediate")}</SelectItem>
+                  <SelectItem value="Advanced">{t("advanced")}</SelectItem>
+                  <SelectItem value="Expert">{t("expert")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -789,23 +814,6 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
           </div>
 
           <div className="space-y-4">
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="edit-difficulty">{t("difficulty")}</Label>
-                <Select value={difficulty} onValueChange={setDifficulty}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("selectDifficulty")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Beginner">{t("beginner")}</SelectItem>
-                    <SelectItem value="Intermediate">{t("intermediate")}</SelectItem>
-                    <SelectItem value="Advanced">{t("advanced")}</SelectItem>
-                    <SelectItem value="Expert">{t("expert")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
             <div className="space-y-2">
               <Label>{t("linkedTutorials")}</Label>
               <div className="relative">

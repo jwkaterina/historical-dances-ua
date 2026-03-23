@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { DanceList } from "@/components/dance-list"
 import { CreateDanceForm } from "@/components/create-dance-form"
 import { SearchInput } from "@/components/search-input"
+import { DifficultyStars } from "@/components/difficulty-stars"
 import {
   Select,
   SelectContent,
@@ -73,10 +74,10 @@ export function HomeContent({ dances, query }: HomeContentProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allDifficulties")}</SelectItem>
-              <SelectItem value="Beginner">{t("beginner")}</SelectItem>
-              <SelectItem value="Intermediate">{t("intermediate")}</SelectItem>
-              <SelectItem value="Advanced">{t("advanced")}</SelectItem>
-              <SelectItem value="Expert">{t("expert")}</SelectItem>
+              <SelectItem value="Beginner"><span className="flex items-center gap-2"><DifficultyStars difficulty="Beginner" />{t("beginner")}</span></SelectItem>
+              <SelectItem value="Intermediate"><span className="flex items-center gap-2"><DifficultyStars difficulty="Intermediate" />{t("intermediate")}</span></SelectItem>
+              <SelectItem value="Advanced"><span className="flex items-center gap-2"><DifficultyStars difficulty="Advanced" />{t("advanced")}</span></SelectItem>
+              <SelectItem value="Expert"><span className="flex items-center gap-2"><DifficultyStars difficulty="Expert" />{t("expert")}</span></SelectItem>
             </SelectContent>
           </Select>
         </div>

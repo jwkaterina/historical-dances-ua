@@ -311,6 +311,7 @@ export const translations = {
     removeFromList: "Видалити зі списку",
     favorites: "Улюблені",
     toastFailedUpdateStatus: "Не вдалося оновити статус",
+    toastDifficultyRequired: "Будь ласка, виберіть рівень складності",
 
     // My Dances page
     myDances: "Мої танці",
@@ -633,6 +634,7 @@ export const translations = {
     removeFromList: "Убрать из списка",
     favorites: "Избранное",
     toastFailedUpdateStatus: "Не удалось обновить статус",
+    toastDifficultyRequired: "Пожалуйста, выберите уровень сложности",
 
     // My Dances page
     myDances: "Мои танцы",

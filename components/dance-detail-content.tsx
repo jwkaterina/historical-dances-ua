@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DifficultyStars } from "@/components/difficulty-stars"
 import { EditDanceForm } from "@/components/edit-dance-form"
 import { DeleteDanceButton } from "@/components/delete-dance-button"
 import { FavoriteButton } from "@/components/favorite-button"
@@ -91,18 +92,6 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
     ? (dance.scheme_ru || dance.scheme)
     : (dance.scheme_ua || dance.scheme)
 
-  // Translate difficulty level
-  const getDifficultyLabel = (difficulty: string | null) => {
-    if (!difficulty) return null
-    const difficultyMap: Record<string, string> = {
-      "Beginner": t("beginner"),
-      "Intermediate": t("intermediate"),
-      "Advanced": t("advanced"),
-      "Expert": t("expert"),
-    }
-    return difficultyMap[difficulty] || difficulty
-  }
-
   // Collapse state per figure (client component already)
   const [openFigures, setOpenFigures] = useState<Record<string, boolean>>({})
   const toggleFigure = (id: string) => setOpenFigures(prev => ({ ...prev, [id]: !prev[id] }))
@@ -134,9 +123,7 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{displayName}</h1>
           <div className="flex w-full gap-2 sm:justify-end items-center">
             {dance.difficulty && (
-              <Badge variant="secondary" className="w-fit">
-                {getDifficultyLabel(dance.difficulty)}
-              </Badge>
+              <DifficultyStars difficulty={dance.difficulty} size="default" />
             )}
             <FavoriteButton danceId={dance.id} size="default" />
             <DanceListSelector danceId={dance.id} size="default" />
