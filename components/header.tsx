@@ -47,6 +47,12 @@ export function Header() {
             >
               {t("tutorials")}
             </Link>
+            <Link
+              href="/my-dances"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {t("myDances")}
+            </Link>
           </nav>
           <LanguageSwitcher />
           <AuthButton />
@@ -91,6 +97,13 @@ export function Header() {
                   className="text-base font-medium text-foreground transition-colors hover:text-primary"
                 >
                   {t("tutorials")}
+                </Link>
+                <Link
+                  href="/my-dances"
+                  onClick={() => setOpen(false)}
+                  className="text-base font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  {t("myDances")}
                 </Link>
                 <div className="pt-4 border-t border-border">
                   <AuthButton />

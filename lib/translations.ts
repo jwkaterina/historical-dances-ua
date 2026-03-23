@@ -298,6 +298,30 @@ export const translations = {
     toastFailedUpdateCategory: "Не вдалося оновити категорію",
     toastCategoryDeleted: "Категорію успішно видалено",
     toastFailedDeleteCategory: "Не вдалося видалити категорію",
+
+    // Favorites & Lists
+    addToFavorites: "Додати до улюблених",
+    removeFromFavorites: "Видалити з улюблених",
+    loginToFavorite: "Будь ласка, увійдіть, щоб використовувати улюблені",
+    loginToUseLists: "Будь ласка, увійдіть, щоб використовувати списки",
+    alreadyLearned: "Вже вивчив(ла)",
+    learning: "Вчу",
+    planToLearn: "Хочу вивчити",
+    addToList: "Додати до списку",
+    removeFromList: "Видалити зі списку",
+    favorites: "Улюблені",
+    toastFailedUpdateStatus: "Не вдалося оновити статус",
+
+    // My Dances page
+    myDances: "Мої танці",
+    myDancesDescription: "Ваші улюблені танці та списки для вивчення",
+    allMyDances: "Всі мої танці",
+    filterByList: "Фільтр за списком",
+    noMyDancesYet: "Поки немає збережених танців",
+    noMyDancesInCategory: "Немає танців у цій категорії",
+    loginToSeeMyDances: "Увійдіть, щоб побачити ваші танці",
+    addDancesFromCatalog: "Додавайте танці з каталогу",
+    goToCatalog: "Перейти до каталогу",
   },
   ru: {
     // Header
@@ -596,6 +620,30 @@ export const translations = {
     toastFailedUpdateCategory: "Не удалось обновить категорию",
     toastCategoryDeleted: "Категория успешно удалена",
     toastFailedDeleteCategory: "Не удалось удалить категорию",
+
+    // Favorites & Lists
+    addToFavorites: "Добавить в избранное",
+    removeFromFavorites: "Удалить из избранного",
+    loginToFavorite: "Пожалуйста, войдите, чтобы использовать избранное",
+    loginToUseLists: "Пожалуйста, войдите, чтобы использовать списки",
+    alreadyLearned: "Уже выучил(а)",
+    learning: "Учу",
+    planToLearn: "Хочу выучить",
+    addToList: "Добавить в список",
+    removeFromList: "Убрать из списка",
+    favorites: "Избранное",
+    toastFailedUpdateStatus: "Не удалось обновить статус",
+
+    // My Dances page
+    myDances: "Мои танцы",
+    myDancesDescription: "Ваши избранные танцы и списки для изучения",
+    allMyDances: "Все мои танцы",
+    filterByList: "Фильтр по списку",
+    noMyDancesYet: "Пока нет сохранённых танцев",
+    noMyDancesInCategory: "Нет танцев в этой категории",
+    loginToSeeMyDances: "Войдите, чтобы увидеть ваши танцы",
+    addDancesFromCatalog: "Добавляйте танцы из каталога",
+    goToCatalog: "Перейти к каталогу",
   },
 } as const
 

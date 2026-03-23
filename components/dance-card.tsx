@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { FavoriteButton } from "@/components/favorite-button"
+import { DanceListSelector } from "@/components/dance-list-selector"
 import { useLanguage } from "@/components/language-provider"
 
 interface DanceCardProps {
@@ -40,11 +42,15 @@ export function DanceCard({ dance }: DanceCardProps) {
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-lg text-foreground">{displayName}</CardTitle>
-            {dance.difficulty && (
-              <Badge variant="secondary" className="text-xs shrink-0">
-                {getDifficultyLabel(dance.difficulty)}
-              </Badge>
-            )}
+            <div className="flex items-center gap-1 shrink-0">
+              {dance.difficulty && (
+                <Badge variant="secondary" className="text-xs shrink-0">
+                  {getDifficultyLabel(dance.difficulty)}
+                </Badge>
+              )}
+              <FavoriteButton danceId={dance.id} />
+              <DanceListSelector danceId={dance.id} />
+            </div>
           </div>
         </CardHeader>
         <CardContent>

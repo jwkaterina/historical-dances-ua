@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EditDanceForm } from "@/components/edit-dance-form"
 import { DeleteDanceButton } from "@/components/delete-dance-button"
+import { FavoriteButton } from "@/components/favorite-button"
+import { DanceListSelector } from "@/components/dance-list-selector"
 import { useLanguage } from "@/components/language-provider"
 import { useAuth } from "@/hooks/use-auth"
 
@@ -129,35 +131,37 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
 
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-          <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{displayName}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{displayName}</h1>
+          <div className="flex w-full gap-2 sm:justify-end items-center">
             {dance.difficulty && (
               <Badge variant="secondary" className="w-fit">
                 {getDifficultyLabel(dance.difficulty)}
               </Badge>
             )}
+            <FavoriteButton danceId={dance.id} size="default" />
+            <DanceListSelector danceId={dance.id} size="default" />
+            {isAdmin && (
+              <>
+                <div className="flex-1 sm:flex-none">
+                  <EditDanceForm
+                    dance={dance}
+                    musicTracks={musicForEdit}
+                    videoEntries={videosForEdit}
+                    figureEntries={figures.map(f => ({
+                      id: f.id,
+                      scheme_ua: f.scheme_ua || '',
+                      scheme_ru: f.scheme_ru || '',
+                      videos: f.videos.map(v => ({ id: v.id, video_type: v.video_type, url: v.url }))
+                    }))}
+                    initialTutorialIds={linkedTutorialIds}
+                  />
+                </div>
+                <div className="flex-1 sm:flex-none">
+                  <DeleteDanceButton danceId={dance.id} danceName={displayName} />
+                </div>
+              </>
+            )}
           </div>
-          {isAdmin && (
-            <div className="flex w-full gap-2 sm:justify-end">
-              <div className="flex-1 sm:flex-none">
-                <EditDanceForm
-                  dance={dance}
-                  musicTracks={musicForEdit}
-                  videoEntries={videosForEdit}
-                  figureEntries={figures.map(f => ({
-                    id: f.id,
-                    scheme_ua: f.scheme_ua || '',
-                    scheme_ru: f.scheme_ru || '',
-                    videos: f.videos.map(v => ({ id: v.id, video_type: v.video_type, url: v.url }))
-                  }))}
-                  initialTutorialIds={linkedTutorialIds}
-                />
-              </div>
-              <div className="flex-1 sm:flex-none">
-                <DeleteDanceButton danceId={dance.id} danceName={displayName} />
-              </div>
-            </div>
-          )}
         </div>
         {dance.origin && (
           <p className="text-muted-foreground">{t("origin")}: {dance.origin}</p>

@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 
 import { Analytics } from '@vercel/analytics/next'
 import { LanguageProvider } from "@/components/language-provider"
+import { UserDanceStatusProvider } from "@/components/user-dance-status-provider"
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css'
 
@@ -41,7 +42,9 @@ export default function RootLayout({
     <html lang="uk">
       <body className={`font-sans antialiased`}>
         <LanguageProvider>
-          {children}
+          <UserDanceStatusProvider>
+            {children}
+          </UserDanceStatusProvider>
         </LanguageProvider>
         <Toaster />
         <Analytics />
