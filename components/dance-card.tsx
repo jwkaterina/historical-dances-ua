@@ -17,15 +17,16 @@ interface DanceCardProps {
     difficulty: string | null
     origin: string | null
   }
+  from?: string
 }
 
-export function DanceCard({ dance }: DanceCardProps) {
+export function DanceCard({ dance, from }: DanceCardProps) {
   const { t } = useLanguage()
   const displayName = dance.displayName || dance.name
   const displayDescription = dance.displayDescription || dance.description
 
   return (
-    <Link href={`/dance/${dance.id}`}>
+    <Link href={`/dance/${dance.id}${from ? `?from=${from}` : ''}`}>
       <Card className="h-full transition-all hover:shadow-md hover:border-primary/30">
         <CardHeader className="pb-3">
           <div>

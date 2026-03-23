@@ -70,12 +70,13 @@ interface DanceDetailContentProps {
   videos: VideoEntry[]
   videosForEdit: VideoEntry[]
   ballId?: string
+  from?: string
   figures?: FigureEntry[]
   linkedTutorials?: LinkedTutorial[]
   linkedTutorialIds?: string[]
 }
 
-export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, videosForEdit, ballId, figures = [], linkedTutorials = [], linkedTutorialIds = [] }: DanceDetailContentProps) {
+export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, videosForEdit, ballId, from, figures = [], linkedTutorials = [], linkedTutorialIds = [] }: DanceDetailContentProps) {
   const { t, language } = useLanguage()
   const { isAdmin } = useAuth()
 
@@ -99,7 +100,7 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
   return (
     <>
       <Link
-        href={ballId ? `/balls/${ballId}` : "/"}
+        href={from === "my-dances" ? "/my-dances" : ballId ? `/balls/${ballId}` : "/"}
         className="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <svg
@@ -115,7 +116,7 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
             d="M15 19l-7-7 7-7"
           />
         </svg>
-        {ballId ? t("backToBall") : t("backToDances")}
+        {from === "my-dances" ? t("backToMyDances") : ballId ? t("backToBall") : t("backToDances")}
       </Link>
 
       <div className="mb-8">

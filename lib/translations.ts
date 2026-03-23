@@ -26,6 +26,7 @@ export const translations = {
 
     // Dance detail
     backToDances: "Назад до танців",
+    backToMyDances: "Назад до моїх танців",
     backToBall: "Назад до балу",
     backToTutorials: "Назад до навчальних матеріалів",
     backToDance: "Назад до танцю",
@@ -349,6 +350,7 @@ export const translations = {
 
     // Dance detail
     backToDances: "Назад к танцам",
+    backToMyDances: "Назад к моим танцам",
     backToBall: "Назад к балу",
     backToTutorials: "Назад к обучающим материалам",
     backToDance: "Назад к танцу",

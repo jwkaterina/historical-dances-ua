@@ -158,7 +158,7 @@ export function MyDancesContent() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {localizedDances.map(dance => (
-            <DanceCard key={dance.id} dance={dance} />
+            <DanceCard key={dance.id} dance={dance} from="my-dances" />
           ))}
         </div>
       )}
