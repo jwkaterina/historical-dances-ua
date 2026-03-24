@@ -11,13 +11,14 @@ import {
 import { useLanguage } from "@/components/language-provider"
 import { User, LogOut } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 export function AuthButton() {
   const { t } = useLanguage()
   const router = useRouter()
+  const pathname = usePathname()
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -58,8 +59,6 @@ export function AuthButton() {
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
   }
 
   if (loading) {
@@ -73,7 +72,7 @@ export function AuthButton() {
   if (!user) {
     return (
       <Button variant="ghost" size="sm" asChild className="h-9 px-3">
-        <Link href="/auth/login">{t("login")}</Link>
+        <Link href={`/auth/login?redirectTo=${encodeURIComponent(pathname)}`}>{t("login")}</Link>
       </Button>
     )
   }

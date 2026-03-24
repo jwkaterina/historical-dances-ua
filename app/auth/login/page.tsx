@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 import { useLanguage } from "@/components/language-provider"
 import { Header } from "@/components/header"
@@ -26,6 +26,8 @@ export default function LoginPage() {
   const [isCredentialsError, setIsCredentialsError] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirectTo") || "/"
   const { t } = useLanguage()
 
   const isCredentials = (message: string) => {
@@ -55,7 +57,7 @@ export default function LoginPage() {
         password,
       })
       if (error) throw error
-      router.push("/")
+      router.push(redirectTo)
       router.refresh()
     } catch (error: unknown) {
       if (error instanceof Error) {

@@ -104,7 +104,7 @@ export function MyDancesContent() {
         <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-lg text-muted-foreground mb-2">{t("loginToSeeMyDances")}</p>
         <Link
-          href="/auth/login"
+          href="/auth/login?redirectTo=%2Fmy-dances"
           className="text-primary underline hover:text-primary/80 transition-colors"
         >
           {t("login")}
