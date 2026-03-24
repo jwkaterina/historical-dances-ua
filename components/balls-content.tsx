@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Suspense } from "react"
+import Link from "next/link"
 
 interface Ball {
   id: string
@@ -99,12 +100,20 @@ export function BallsContent({ balls, dances, query }: BallsContentProps) {
 
   return (
     <>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{t("ballsTitle")}</h1>
-          <p className="mt-2 text-muted-foreground">{t("ballsDescription")}</p>
+      <div className={`grid transition-all duration-300 ease-in-out ${isAdmin ? "grid-rows-[1fr] opacity-100 mb-4" : "grid-rows-[0fr] opacity-0"}`}>
+        <div className="overflow-hidden flex justify-end">
+          <CreateBallForm dances={dances} />
         </div>
-        {isAdmin && <CreateBallForm dances={dances} />}
+      </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground">{t("ballsTitle")}</h1>
+        <p className="mt-2 text-muted-foreground">{t("ballsDescription")}</p>
+        <Link
+          href="/faq"
+          className="mt-4 inline-block text-primary underline hover:text-primary/80 transition-colors"
+        >
+          {t("faqs")}
+        </Link>
       </div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex-1">

@@ -72,13 +72,14 @@ interface CreateBallFormProps {
   dances: Dance[]
   ballToEdit?: any
   triggerClassName?: string
+  compact?: boolean
 }
 
-export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateBallFormProps) {
+export function CreateBallForm({ dances, ballToEdit, triggerClassName, compact }: CreateBallFormProps) {
   const { t, language } = useLanguage()
   const isMobile = useIsMobile()
   const router = useRouter()
-  const { isAdmin } = useAuth()
+  const { isAdmin, loading: authLoading } = useAuth()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
 
@@ -442,10 +443,6 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
   )
 
   // Guard rendering after hooks are defined to keep hooks order stable
-  if (!isAdmin) {
-    return null
-  }
-
   return (
       <Dialog
           open={open}
@@ -456,11 +453,20 @@ export function CreateBallForm({ dances, ballToEdit, triggerClassName }: CreateB
       >
         <DialogTrigger asChild>
           <Button className={triggerClassName}>
-            <Edit className="mr-2 h-4 w-4" />
-            {ballToEdit ? t("editBall") : (<><Plus className="mr-2 h-4 w-4" />{t("createBall")}</>)}
+            {ballToEdit ? (
+              <>
+                <Edit className="sm:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">{t("editBall")}</span>
+              </>
+            ) : (
+              <>
+                <Plus className="sm:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">{t("createBall")}</span>
+              </>
+            )}
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
           <DialogHeader>
             <DialogTitle>{ballToEdit ? t("editBall") : t("createBall")}</DialogTitle>
           </DialogHeader>

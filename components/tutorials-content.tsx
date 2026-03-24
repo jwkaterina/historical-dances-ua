@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TutorialForm } from "@/components/tutorial-form"
 import { deleteTutorial, updateCategory, deleteCategory, createCategory } from "@/app/actions/tutorials"
-import { Pencil, Trash2, X } from "lucide-react"
+import { Pencil, Trash2, X, Settings } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -73,7 +73,7 @@ function getYouTubeId(url: string): string | null {
   return null
 }
 
-function ManageCategoriesDialog({ categories, onOpen }: { categories: Category[]; onOpen?: () => void }) {
+function ManageCategoriesDialog({ categories, onOpen, compact }: { categories: Category[]; onOpen?: () => void; compact?: boolean }) {
   const { t, language } = useLanguage()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
@@ -148,9 +148,12 @@ function ManageCategoriesDialog({ categories, onOpen }: { categories: Category[]
   return (
     <Dialog open={open} onOpenChange={(v) => { if (v) onOpen?.(); setOpen(v) }}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">{t("manageCategories")}</Button>
+        <Button variant="outline" size="sm">
+          <Pencil className="sm:mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">{t("manageCategories")}</span>
+        </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-sm max-h-[80vh] overflow-y-auto px-3 sm:px-6">
         <DialogHeader>
           <DialogTitle>{t("manageCategories")}</DialogTitle>
         </DialogHeader>
@@ -210,7 +213,7 @@ function ManageCategoriesDialog({ categories, onOpen }: { categories: Category[]
                               {t("deleteConfirmMessageCategory")} {`"${name}"`}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <div className="flex gap-3">
+                          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                             <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleDelete(cat.id)}
@@ -288,7 +291,7 @@ function DeleteTutorialButton({ id, title }: { id: string; title: string }) {
             {t("deleteConfirmMessageTutorial")} {`"${title}"`}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
@@ -405,7 +408,7 @@ function PdfCard({ tutorial, title }: { tutorial: Tutorial; title: string }) {
 
 export function TutorialsContent({ tutorials, categories, query }: TutorialsContentProps) {
   const { t, language } = useLanguage()
-  const { isAdmin } = useAuth()
+  const { isAdmin, loading: authLoading } = useAuth()
   const [manageMode, setManageMode] = useState(false)
   const [activeCategoryId, setActiveCategoryId] = useState<string>("all")
 
@@ -423,27 +426,23 @@ export function TutorialsContent({ tutorials, categories, query }: TutorialsCont
 
   return (
     <>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{t("tutorialsTitle")}</h1>
-          <p className="mt-2 text-muted-foreground">{t("tutorialsDescription")}</p>
+      <div className={`grid transition-all duration-300 ease-in-out ${isAdmin ? "grid-rows-[1fr] opacity-100 mb-4" : "grid-rows-[0fr] opacity-0"}`}>
+        <div className="overflow-hidden flex justify-end gap-2">
+          <TutorialForm mode="create" categories={categories} onOpen={() => setManageMode(false)} />
+          <ManageCategoriesDialog categories={categories} onOpen={() => setManageMode(false)} />
+          <Button
+            variant={manageMode ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setManageMode(!manageMode)}
+          >
+            <Settings className="sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">{manageMode ? t("done") : t("manageTutorials")}</span>
+          </Button>
         </div>
-        {isAdmin && (
-          <div className="flex flex-col gap-2 sm:flex-row shrink-0">
-            <TutorialForm mode="create" categories={categories} onOpen={() => setManageMode(false)} />
-            <ManageCategoriesDialog categories={categories} onOpen={() => setManageMode(false)} />
-            <Button
-              variant={manageMode ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setManageMode(!manageMode)}
-            >
-              <span className="relative inline-flex justify-center">
-                <span className="invisible">{t("manageTutorials")}</span>
-                <span className="absolute">{manageMode ? t("done") : t("manageTutorials")}</span>
-              </span>
-            </Button>
-          </div>
-        )}
+      </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground">{t("tutorialsTitle")}</h1>
+        <p className="mt-2 text-muted-foreground">{t("tutorialsDescription")}</p>
       </div>
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

@@ -78,9 +78,10 @@ interface EditDanceFormProps {
   videoEntries: VideoEntry[]
   figureEntries?: FigureFormEntry[]
   initialTutorialIds?: string[]
+  compact?: boolean
 }
 
-export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries = [], initialTutorialIds = [] }: EditDanceFormProps) {
+export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries = [], initialTutorialIds = [], compact }: EditDanceFormProps) {
   const router = useRouter()
   const { t, language } = useLanguage()
   const { isAdmin, loading: authLoading } = useAuth()
@@ -513,19 +514,15 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
   }
 
   // Only show for admins
-  if (authLoading || !isAdmin) {
-    return null
-  }
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full sm:w-auto">
-          <Pencil className="mr-2 h-4 w-4" />
-          {t("editDance")}
+        <Button variant="outline">
+          <Pencil className="sm:mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">{t("editDance")}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
         <DialogHeader>
           <DialogTitle>{t("editDance")}</DialogTitle>
         </DialogHeader>
@@ -773,7 +770,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
                   </div>
                 )}
 
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Button
                           type="button"
                           variant="outline"
@@ -973,7 +970,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
                 </div>
               ))}
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   type="button"
                   variant="outline"

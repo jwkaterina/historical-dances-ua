@@ -99,56 +99,56 @@ export function DanceDetailContent({ dance, musicTracks, musicForEdit, videos, v
 
   return (
     <>
-      <Link
-        href={from === "my-dances" ? "/my-dances" : ballId ? `/balls/${ballId}` : "/"}
-        className="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <svg
-          className="mr-2 h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+      <div className="flex items-center justify-between mb-6">
+        <Link
+          href={from === "my-dances" ? "/my-dances" : ballId ? `/balls/${ballId}` : "/"}
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 19l-7-7 7-7"
-          />
-        </svg>
-        {from === "my-dances" ? t("backToMyDances") : ballId ? t("backToBall") : t("backToDances")}
-      </Link>
+          <svg
+            className="mr-2 h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          <span className="hidden sm:inline">
+            {from === "my-dances" ? t("backToMyDances") : ballId ? t("backToBall") : t("backToDances")}
+          </span>
+        </Link>
+        {isAdmin && (
+          <div className="flex gap-2 items-center animate-in fade-in duration-300">
+            <EditDanceForm
+              dance={dance}
+              musicTracks={musicForEdit}
+              videoEntries={videosForEdit}
+              figureEntries={figures.map(f => ({
+                id: f.id,
+                scheme_ua: f.scheme_ua || '',
+                scheme_ru: f.scheme_ru || '',
+                videos: f.videos.map(v => ({ id: v.id, video_type: v.video_type, url: v.url }))
+              }))}
+              initialTutorialIds={linkedTutorialIds}
+            />
+            <DeleteDanceButton danceId={dance.id} danceName={displayName} />
+          </div>
+        )}
+      </div>
 
       <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+        <div className="flex items-center gap-4 mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{displayName}</h1>
-          <div className="flex w-full gap-2 sm:justify-end items-center">
-            {dance.difficulty && (
-              <DifficultyStars difficulty={dance.difficulty} size="default" />
-            )}
+          {dance.difficulty && (
+            <DifficultyStars difficulty={dance.difficulty} size="default" />
+          )}
+          <div className="ml-auto flex gap-2 items-center">
             <FavoriteButton danceId={dance.id} size="default" />
             <DanceListSelector danceId={dance.id} size="default" />
-            {isAdmin && (
-              <>
-                <div className="flex-1 sm:flex-none">
-                  <EditDanceForm
-                    dance={dance}
-                    musicTracks={musicForEdit}
-                    videoEntries={videosForEdit}
-                    figureEntries={figures.map(f => ({
-                      id: f.id,
-                      scheme_ua: f.scheme_ua || '',
-                      scheme_ru: f.scheme_ru || '',
-                      videos: f.videos.map(v => ({ id: v.id, video_type: v.video_type, url: v.url }))
-                    }))}
-                    initialTutorialIds={linkedTutorialIds}
-                  />
-                </div>
-                <div className="flex-1 sm:flex-none">
-                  <DeleteDanceButton danceId={dance.id} danceName={displayName} />
-                </div>
-              </>
-            )}
           </div>
         </div>
         {dance.origin && (

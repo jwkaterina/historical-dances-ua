@@ -28,6 +28,7 @@ export const translations = {
     backToDances: "Назад до танців",
     backToMyDances: "Назад до моїх танців",
     backToBall: "Назад до балу",
+    backToBalls: "Назад до балів",
     backToTutorials: "Назад до навчальних матеріалів",
     backToDance: "Назад до танцю",
     origin: "Походження",
@@ -86,7 +87,7 @@ export const translations = {
     ballDate: "Дата балу",
     ballPlace: "Місце проведення балу",
     ballsTitle: "Бали",
-    ballsDescription: "Керуйте своїми балами",
+    ballsDescription: "Інформація про майбутні та минулі бали",
     createBall: "Створити бал",
     editBall: "Редагувати бал",
     ballNotFound: "Бал не знайдено",
@@ -238,6 +239,17 @@ export const translations = {
     ballInfoSaved: "Інформацію про бал збережено",
     ballInfoSaveFailed: "Помилка при збереженні інформації про бал",
 
+    // FAQ
+    faqs: "Часті запитання",
+    faqsDescription: "Відповіді на часті запитання",
+    addFAQ: "Додати запитання",
+    editFAQ: "Редагувати FAQ",
+    questionLabel: "Запитання",
+    answerLabel: "Відповідь",
+    faqSaved: "FAQ збережено",
+    faqSaveFailed: "Помилка при збереженні FAQ",
+    noFaqsYet: "Запитань поки немає",
+
     // Tutorials
     tutorials: "Навчальні матеріали",
     tutorialsTitle: "Навчальні матеріали",
@@ -352,6 +364,7 @@ export const translations = {
     backToDances: "Назад к танцам",
     backToMyDances: "Назад к моим танцам",
     backToBall: "Назад к балу",
+    backToBalls: "Назад к балам",
     backToTutorials: "Назад к обучающим материалам",
     backToDance: "Назад к танцу",
     origin: "Происхождение",
@@ -410,7 +423,7 @@ export const translations = {
     ballDate: "Дата бала",
     ballPlace: "Место проведения бала",
     ballsTitle: "Балы",
-    ballsDescription: "Управляйте событиями вашего бала",
+    ballsDescription: "Информация о предстоящих и прошедших балах",
     createBall: "Создать бал",
     editBall: "Редактировать бал",
     ballNotFound: "Бал не найден",
@@ -561,6 +574,17 @@ export const translations = {
     saveBallInfo: "Сохранить информацию",
     ballInfoSaved: "Информация о бале сохранена",
     ballInfoSaveFailed: "Ошибка при сохранении информации о бале",
+
+    // FAQ
+    faqs: "Часто задаваемые вопросы",
+    faqsDescription: "Ответы на часто задаваемые вопросы",
+    addFAQ: "Добавить вопрос",
+    editFAQ: "Редактировать FAQ",
+    questionLabel: "Вопрос",
+    answerLabel: "Ответ",
+    faqSaved: "FAQ сохранены",
+    faqSaveFailed: "Ошибка при сохранении FAQ",
+    noFaqsYet: "Вопросов пока нет",
 
     // Tutorials
     tutorials: "Обучающие материалы",

@@ -46,9 +46,10 @@ interface TutorialFormProps {
   onSuccess?: () => void
   onOpen?: () => void
   iconOnly?: boolean
+  compact?: boolean
 }
 
-export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, iconOnly }: TutorialFormProps) {
+export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, iconOnly, compact }: TutorialFormProps) {
   const { t, language } = useLanguage()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
@@ -201,8 +202,8 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, ic
       <DialogTrigger asChild>
         {mode === 'create' ? (
           <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            {t("addNewTutorial")}
+            <Plus className="sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">{t("addNewTutorial")}</span>
           </Button>
         ) : iconOnly ? (
           <Button variant="ghost" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm">
@@ -215,7 +216,7 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, ic
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto px-3 sm:px-6">
         <DialogHeader>
           <DialogTitle>
             {mode === 'create' ? t("createTutorial") : t("editTutorial")}
@@ -375,7 +376,7 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, ic
             </Select>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 justify-end pt-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {t("cancel")}
             </Button>

@@ -81,7 +81,7 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
   const { t, language } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
-  const { isAdmin } = useAuth()
+  const { isAdmin, loading: authLoading } = useAuth()
 
   const displayName = language === "ru"
       ? (ball.name_ru || ball.name)
@@ -143,66 +143,60 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
 
   return (
       <div className="space-y-6">
-        <div>
-          <Button variant="ghost" className="mb-4" onClick={() => router.back()}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("back")}
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">{t("backToBalls")}</span>
           </Button>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{displayName}</h1>
-            <div className="mt-4 space-y-2 text-muted-foreground">
-              <p>
-                <span className="font-semibold">{t("ballDate")}:</span>{" "}
-                {formattedDate}
-              </p>
-              <p>
-                <span className="font-semibold">{t("city")}:</span>{" "}
-                {displayPlace}
-              </p>
-            </div>
-          </div>
           {isAdmin && (
-              <div className="flex w-full gap-2 sm:justify-end">
-                <div className="flex-1 sm:flex-none">
-                  <CreateBallForm dances={allDances} ballToEdit={ball} triggerClassName="w-full sm:w-auto" />
-                </div>
-                <div className="flex-1 sm:flex-none">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-full sm:w-auto">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        {t("deleteBall")}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t("deleteConfirmBall")}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {t("deleteConfirmMessageBall")} "{displayName}"
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <div className="flex gap-3">
-                        <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleDelete}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          {t("delete")}
-                        </AlertDialogAction>
-                      </div>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+              <div className="flex gap-2 animate-in fade-in duration-300">
+                <CreateBallForm dances={allDances} ballToEdit={ball} />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <Trash2 className="sm:mr-2 h-4 w-4" />
+                      <span className="hidden sm:inline">{t("deleteBall")}</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t("deleteConfirmBall")}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t("deleteConfirmMessageBall")} "{displayName}"
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                      <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                      <AlertDialogAction
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {t("delete")}
+                      </AlertDialogAction>
+                    </div>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
           )}
         </div>
 
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">{displayName}</h1>
+          <div className="mt-4 space-y-2 text-muted-foreground">
+            <p>
+              <span className="font-semibold">{t("ballDate")}:</span>{" "}
+              {formattedDate}
+            </p>
+            <p>
+              <span className="font-semibold">{t("city")}:</span>{" "}
+              {displayPlace}
+            </p>
+          </div>
+        </div>
+
         <div className="mb-6">
           <Link
-            href={`/balls/${ball.id}/info`}
+            href={`/faq?from=${encodeURIComponent(displayName)}`}
             className="text-primary underline underline-offset-2 font-medium"
           >
             {t("ballInfoLink")}

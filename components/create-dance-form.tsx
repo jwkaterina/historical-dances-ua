@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/select"
 // removed unused Tabs import
 import { useLanguage } from "@/components/language-provider"
-import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { Plus, Trash2, Upload, X } from "lucide-react"
 // removed unused Link import
@@ -57,7 +56,6 @@ export function CreateDanceForm() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { t, language } = useLanguage()
-  const { isAdmin, loading: authLoading } = useAuth()
   const { toast } = useToast()
   
   // German fields
@@ -506,11 +504,6 @@ export function CreateDanceForm() {
     }
   }
 
-  // Only show for admins
-  if (authLoading || !isAdmin) {
-    return null
-  }
-
   const fetchTutorials = async () => {
     const supabase = createClient()
     const { data } = await supabase.from('tutorials').select('id, title_ua, title_ru').order('title_ua')
@@ -527,11 +520,11 @@ export function CreateDanceForm() {
       }}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          {t("createDance")}
+          <Plus className="sm:mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">{t("createDance")}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
         <DialogHeader>
           <DialogTitle>{t("createDance")}</DialogTitle>
         </DialogHeader>
@@ -726,7 +719,7 @@ export function CreateDanceForm() {
                   </div>
                 )}
 
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Button
                           type="button"
                           variant="outline"
@@ -912,7 +905,7 @@ export function CreateDanceForm() {
                 </div>
               ))}
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   type="button"
                   variant="outline"

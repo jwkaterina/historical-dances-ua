@@ -121,8 +121,6 @@ export async function getBallById(id: string) {
         place,
         place_ua,
         place_ru,
-        info_ru,
-        info_ua,
         created_at,
         user_id,
         ball_sections (
@@ -444,39 +442,5 @@ export async function deleteBall(id: string) {
     throw error
   }
 }
-
-// File: `app/actions/ball.ts`
-export async function updateBallInfo(id: string, info_ua?: string, info_ru?: string) {
-  try {
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) throw new Error("Not authenticated")
-
-    const payload: Record<string, any> = {}
-    if (typeof info_ua !== "undefined") payload.info_ua = (info_ua ?? "").trim()
-    if (typeof info_ru !== "undefined") payload.info_ru = (info_ru ?? "").trim()
-
-    if (Object.keys(payload).length === 0) {
-      throw new Error("No info provided to update")
-    }
-
-    const { error } = await supabase
-        .from("balls")
-        .update(payload)
-        .eq("id", id)
-
-    if (error) throw error
-
-    revalidatePath(`/balls/${id}/info`)
-    revalidatePath(`/balls/${id}`)
-  } catch (error) {
-    console.log("[v0] Update ball info error:", error)
-    throw error
-  }
-}
-
 
 // End of file

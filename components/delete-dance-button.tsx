@@ -22,9 +22,10 @@ import { Trash2 } from "lucide-react"
 interface DeleteDanceButtonProps {
   danceId: string
   danceName: string
+  compact?: boolean
 }
 
-export function DeleteDanceButton({ danceId, danceName }: DeleteDanceButtonProps) {
+export function DeleteDanceButton({ danceId, danceName, compact }: DeleteDanceButtonProps) {
   const router = useRouter()
   const { t, language } = useLanguage()
   const { isAdmin, loading: authLoading } = useAuth()
@@ -70,17 +71,12 @@ export function DeleteDanceButton({ danceId, danceName }: DeleteDanceButtonProps
     }
   }
 
-  // Only show for admins
-  if (authLoading || !isAdmin) {
-    return null
-  }
-
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm" className="w-full sm:w-auto">
-          <Trash2 className="mr-2 h-4 w-4" />
-          {t("deleteDance")}
+        <Button variant="destructive" size="sm">
+          <Trash2 className="sm:mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">{t("deleteDance")}</span>
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -90,7 +86,7 @@ export function DeleteDanceButton({ danceId, danceName }: DeleteDanceButtonProps
             {t("deleteConfirmMessage")} {`"${danceName}"`}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
