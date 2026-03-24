@@ -56,14 +56,10 @@ export function AuthButton() {
   }, [])
 
   const handleLogout = async () => {
-    try {
-      const supabase = createClient()
-      await supabase.auth.signOut()
-      setUser(null)
-      router.refresh()
-    } catch (error) {
-      console.error("[v0] Logout error:", error)
-    }
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/')
+    router.refresh()
   }
 
   if (loading) {
