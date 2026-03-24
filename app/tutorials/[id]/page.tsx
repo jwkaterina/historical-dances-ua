@@ -13,11 +13,10 @@ export default async function TutorialDetailPage({ params, searchParams }: PageP
   const { danceId } = await searchParams
   const supabase = await createClient()
 
-  const { data: tutorial, error } = await supabase
-    .from("tutorials")
-    .select("*")
-    .eq("id", id)
-    .single()
+  const [{ data: tutorial, error }, { data: categories }] = await Promise.all([
+    supabase.from("tutorials").select("*").eq("id", id).single(),
+    supabase.from("tutorial_categories").select("*").order("name_ua"),
+  ])
 
   if (error || !tutorial) {
     notFound()
@@ -27,7 +26,7 @@ export default async function TutorialDetailPage({ params, searchParams }: PageP
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <TutorialDetailContent tutorial={tutorial} danceId={danceId} />
+        <TutorialDetailContent tutorial={tutorial} categories={categories || []} danceId={danceId} />
       </main>
     </div>
   )

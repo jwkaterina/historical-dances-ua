@@ -522,7 +522,7 @@ export function EditDanceForm({ dance, musicTracks, videoEntries, figureEntries 
           <span className="hidden sm:inline">{t("editDance")}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl px-3 sm:px-6 pb-24 sm:pb-6">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl px-5 sm:px-6 pb-24 sm:pb-6">
         <DialogHeader>
           <DialogTitle>{t("editDance")}</DialogTitle>
         </DialogHeader>

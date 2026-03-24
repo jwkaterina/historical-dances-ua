@@ -211,12 +211,12 @@ export function TutorialForm({ mode, tutorial, categories, onSuccess, onOpen, ic
           </Button>
         ) : (
           <Button variant="outline" size="sm">
-            <Pencil className="h-4 w-4 mr-1" />
-            {t("edit")}
+            <Pencil className="sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">{t("edit")}</span>
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto px-3 sm:px-6">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto px-5 sm:px-6">
         <DialogHeader>
           <DialogTitle>
             {mode === 'create' ? t("createTutorial") : t("editTutorial")}

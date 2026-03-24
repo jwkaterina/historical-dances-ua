@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, Suspense } from "react"
+import Link from "next/link"
 import { useLanguage } from "@/components/language-provider"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
@@ -8,8 +9,8 @@ import { SearchInput } from "@/components/search-input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TutorialForm } from "@/components/tutorial-form"
-import { deleteTutorial, updateCategory, deleteCategory, createCategory } from "@/app/actions/tutorials"
-import { Pencil, Trash2, X, Settings } from "lucide-react"
+import { updateCategory, deleteCategory, createCategory } from "@/app/actions/tutorials"
+import { Pencil, Trash2, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -153,7 +154,7 @@ function ManageCategoriesDialog({ categories, onOpen, compact }: { categories: C
           <span className="hidden sm:inline">{t("manageCategories")}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-sm max-h-[80vh] overflow-y-auto px-3 sm:px-6">
+      <DialogContent className="sm:max-w-sm max-h-[80vh] overflow-y-auto px-5 sm:px-6">
         <DialogHeader>
           <DialogTitle>{t("manageCategories")}</DialogTitle>
         </DialogHeader>
@@ -260,52 +261,6 @@ function ManageCategoriesDialog({ categories, onOpen, compact }: { categories: C
   )
 }
 
-function DeleteTutorialButton({ id, title }: { id: string; title: string }) {
-  const { t } = useLanguage()
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
-
-  const handleDelete = async () => {
-    setLoading(true)
-    try {
-      await deleteTutorial(id)
-      toast({ title: t("toastSuccess"), description: t("toastTutorialDeleted") })
-    } catch {
-      toast({ title: t("toastError"), description: t("toastFailedDeleteTutorial"), variant: "destructive" })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm text-destructive hover:text-destructive">
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{t("deleteConfirmTutorial")}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {t("deleteConfirmMessageTutorial")} {`"${title}"`}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
-            disabled={loading}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {loading ? t("deleting") : t("delete")}
-          </AlertDialogAction>
-        </div>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
-
 function VideoPlayer({ tutorial }: { tutorial: Tutorial }) {
   if (tutorial.video_type === 'youtube') {
     const videoId = getYouTubeId(tutorial.url)
@@ -409,7 +364,6 @@ function PdfCard({ tutorial, title }: { tutorial: Tutorial; title: string }) {
 export function TutorialsContent({ tutorials, categories, query }: TutorialsContentProps) {
   const { t, language } = useLanguage()
   const { isAdmin, loading: authLoading } = useAuth()
-  const [manageMode, setManageMode] = useState(false)
   const [activeCategoryId, setActiveCategoryId] = useState<string>("all")
 
   const categoryMap = Object.fromEntries(categories.map((cat) => [cat.id, cat]))
@@ -428,16 +382,8 @@ export function TutorialsContent({ tutorials, categories, query }: TutorialsCont
     <>
       <div className={`grid transition-all duration-300 ease-in-out ${isAdmin ? "grid-rows-[1fr] opacity-100 mb-4" : "grid-rows-[0fr] opacity-0"}`}>
         <div className="overflow-hidden flex justify-end gap-2">
-          <TutorialForm mode="create" categories={categories} onOpen={() => setManageMode(false)} />
-          <ManageCategoriesDialog categories={categories} onOpen={() => setManageMode(false)} />
-          <Button
-            variant={manageMode ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => setManageMode(!manageMode)}
-          >
-            <Settings className="sm:mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">{manageMode ? t("done") : t("manageTutorials")}</span>
-          </Button>
+          <TutorialForm mode="create" categories={categories} />
+          <ManageCategoriesDialog categories={categories} />
         </div>
       </div>
       <div className="mb-8">
@@ -475,32 +421,28 @@ export function TutorialsContent({ tutorials, categories, query }: TutorialsCont
             const category = tutorial.category_id ? categoryMap[tutorial.category_id] : null
             const categoryName = category ? (language === 'ru' ? category.name_ru : category.name_ua) : null
             return (
-              <Card key={tutorial.id} className="transition-all hover:shadow-md relative">
-                {isAdmin && manageMode && (
-                  <div className="absolute top-2 right-2 z-10 flex gap-1">
-                    <TutorialForm mode="edit" tutorial={tutorial} categories={categories} iconOnly />
-                    <DeleteTutorialButton id={tutorial.id} title={title} />
-                  </div>
-                )}
-                <CardContent className="p-4">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-semibold text-foreground">{title}</h3>
-                      {categoryName && (
-                        <Badge variant="secondary" className="shrink-0">{categoryName}</Badge>
+              <Link key={tutorial.id} href={`/tutorials/${tutorial.id}`}>
+                <Card className="h-full transition-all hover:shadow-md hover:border-primary/30">
+                  <CardContent className="p-4">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-foreground">{title}</h3>
+                        {categoryName && (
+                          <Badge variant="secondary" className="shrink-0">{categoryName}</Badge>
+                        )}
+                      </div>
+
+                      {tutorial.type === 'video' ? (
+                        <VideoPlayer tutorial={tutorial} />
+                      ) : tutorial.type === 'image' ? (
+                        <ImageCard tutorial={tutorial} title={title} />
+                      ) : (
+                        <PdfCard tutorial={tutorial} title={title} />
                       )}
                     </div>
-
-                    {tutorial.type === 'video' ? (
-                      <VideoPlayer tutorial={tutorial} />
-                    ) : tutorial.type === 'image' ? (
-                      <ImageCard tutorial={tutorial} title={title} />
-                    ) : (
-                      <PdfCard tutorial={tutorial} title={title} />
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             )
           })}
         </div>
