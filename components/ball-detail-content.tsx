@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreateBallForm } from "@/components/create-ball-form"
+import { FavoriteButton } from "@/components/favorite-button"
+import { DanceListSelector } from "@/components/dance-list-selector"
 import { deleteBall } from "@/app/actions/ball"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
@@ -281,6 +283,10 @@ export function BallDetailContent({ ball, allDances }: BallDetailContentProps) {
                                           )}
                                         </div>
                                       </Link>
+                                      <div className="ml-auto flex gap-1 items-center">
+                                        <FavoriteButton danceId={sd.dance.id} size="sm" />
+                                        <DanceListSelector danceId={sd.dance.id} size="sm" />
+                                      </div>
                                     </div>
                                     {selectedTracks.length > 0 && (
                                       <div className="ml-10 pt-4 space-y-3">
