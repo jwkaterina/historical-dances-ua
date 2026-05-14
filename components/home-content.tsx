@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useLanguage } from "@/components/language-provider"
-import { useAuth } from "@/hooks/use-auth"
+import { useUserDanceStatus } from "@/components/user-dance-status-provider"
 import { DanceList } from "@/components/dance-list"
 import { CreateDanceForm } from "@/components/create-dance-form"
 import { SearchInput } from "@/components/search-input"
@@ -14,7 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Heart, GraduationCap, BookMarked, Lightbulb } from "lucide-react"
 import { Suspense } from "react"
+import { useAuth } from "@/hooks/use-auth"
+
+type UserFilter = "all" | "favorites" | "already_learned" | "learning" | "plan_to_learn"
 
 interface Dance {
   id: string
@@ -35,8 +39,10 @@ interface HomeContentProps {
 
 export function HomeContent({ dances, query }: HomeContentProps) {
   const { t, language } = useLanguage()
-  const { isAdmin } = useAuth()
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all")
+  const [userFilter, setUserFilter] = useState<UserFilter>("all")
+  const { isAdmin, isAuthenticated } = useAuth()
+  const { statuses } = useUserDanceStatus()
 
   // Transform dances to show localized names
   const localizedDances = dances.map((dance) => ({
@@ -48,9 +54,16 @@ export function HomeContent({ dances, query }: HomeContentProps) {
   }))
 
   // Filter by difficulty
-  const filteredDances = selectedDifficulty === "all" 
-    ? localizedDances 
+  const difficultyFiltered = selectedDifficulty === "all"
+    ? localizedDances
     : localizedDances.filter(dance => dance.difficulty === selectedDifficulty)
+
+  // Filter by user status
+  const filteredDances = userFilter === "all" ? difficultyFiltered : difficultyFiltered.filter(dance => {
+    const status = statuses.get(dance.id)
+    if (userFilter === "favorites") return status?.is_favorite === true
+    return status?.list_type === userFilter
+  })
 
   return (
     <>
@@ -69,7 +82,7 @@ export function HomeContent({ dances, query }: HomeContentProps) {
             <SearchInput placeholder={t("searchDances")} />
           </Suspense>
         </div>
-        <div className="self-end">
+        <div className="flex items-center gap-2 self-end">
           <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
             <SelectTrigger>
               <SelectValue placeholder={t("filterByDifficulty")} />
@@ -82,6 +95,20 @@ export function HomeContent({ dances, query }: HomeContentProps) {
               <SelectItem value="Expert"><span className="flex items-center gap-2"><DifficultyStars difficulty="Expert" />{t("expert")}</span></SelectItem>
             </SelectContent>
           </Select>
+          {isAuthenticated && (
+            <Select value={userFilter} onValueChange={(v) => setUserFilter(v as UserFilter)}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("filterByList")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("allMyDances")}</SelectItem>
+                <SelectItem value="favorites"><span className="flex items-center gap-2"><Heart className="h-4 w-4" />{t("favorites")}</span></SelectItem>
+                <SelectItem value="learning"><span className="flex items-center gap-2"><Lightbulb className="h-4 w-4" />{t("learning")}</span></SelectItem>
+                <SelectItem value="already_learned"><span className="flex items-center gap-2"><GraduationCap className="h-4 w-4" />{t("alreadyLearned")}</span></SelectItem>
+                <SelectItem value="plan_to_learn"><span className="flex items-center gap-2"><BookMarked className="h-4 w-4" />{t("planToLearn")}</span></SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
       <DanceList dances={filteredDances} query={query} />
