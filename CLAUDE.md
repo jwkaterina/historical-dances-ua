@@ -244,7 +244,23 @@ Required in `.env` or `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=           # Supabase project URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY=      # Public anon key
 SUPABASE_SERVICE_ROLE_KEY=          # Service role key (server-side only)
+NEXT_PUBLIC_SUPABASE_SCHEMA=ua      # set when sharing the taenze project; unset = public
 ```
+
+### Sharing the taenze project
+
+Since October 2026 the UA site runs inside the German site's Supabase project
+(taenze) instead of a project of its own. Its tables live in the `ua` schema and
+its files in the `ua-audio`, `ua-videos`, `ua-images` and `ua-documents` buckets,
+so nothing mixes with the German site's `public` schema and buckets.
+`lib/supabase/schema.ts` reads `NEXT_PUBLIC_SUPABASE_SCHEMA` and every Supabase
+client and the upload route use it. Logins (`auth.users`) are shared by both
+sites; each site has its own `profiles` table for roles.
+
+`scripts/026_taenze_ua_schema.sql` sets this up and is run in taenze. Any later
+migration for this site must target the `ua` schema (`ua.dances`, ...), never
+`public`, and the `ua` schema must stay listed under Project Settings -> Data API
+-> Exposed schemas.
 
 ## Deployment
 
