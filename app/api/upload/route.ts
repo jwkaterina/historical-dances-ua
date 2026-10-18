@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { bucketFor } from "@/lib/supabase/schema"
 
 // This endpoint creates a signed upload URL for Supabase Storage
 // The client will then upload directly to Supabase using this URL
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const bucketName = isAudio ? "audio" : isVideo ? "videos" : isPdf ? "documents" : "images"
+    const bucketName = bucketFor(isAudio ? "audio" : isVideo ? "videos" : isPdf ? "documents" : "images")
 
     // Generate safe filename
     const ext = filename.split(".").pop() || (isAudio ? "mp3" : isVideo ? "mp4" : isPdf ? "pdf" : "jpg")
